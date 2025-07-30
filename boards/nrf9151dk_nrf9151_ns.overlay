@@ -6,7 +6,7 @@
     pinctrl-1 = <&i2c0_sleep>;
     pinctrl-names = "default", "sleep";
     clock-frequency = <I2C_BITRATE_FAST>;
-    status = "okay";    scd4x: scd4x@62 {
+    scd4x: scd4x@62 {
         status = "okay";
         compatible = "sensirion,scd41";
         mode = <0>;
@@ -18,8 +18,6 @@
         reg = <0x44>;
         repeatability = <2>;
     };
-
-
 };
 
 &pinctrl {

@@ -16,6 +16,8 @@ typedef enum
     DEVICE_STATE_SLEEP,
     DEVICE_STATE_IDLE,
     DEVICE_STATE_OTA,
+    DEVICE_STATE_TEMP_HUM,
+    DEVICE_STATE_CO2,
 } SystemState;
 
 extern SystemState DEVICE_STATE;
