@@ -1,0 +1,8 @@
+{
+  "operation": "app_fw_update",
+  "fwversion": "v2.0.0",
+  "size": 207700,
+  "location": {
+    "url": "https://nrfotabucket-test.s3.us-east-1.amazonaws.com/zephyr.signed.bin"
+  }
+}

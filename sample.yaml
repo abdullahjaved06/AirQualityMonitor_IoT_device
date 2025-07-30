@@ -1,0 +1,15 @@
+sample:
+  name: AWS IoT MQTT
+tests:
+  sample.net.aws_iot:
+    sysbuild: true
+    tags: ci_build sysbuild ci_samples_net
+    build_only: true
+    build_on_all: true
+    integration_platforms:
+      - nrf9160dk/nrf9160/ns
+      - nrf9151dk/nrf9151/ns
+
+    platform_allow:
+      - nrf9160dk/nrf9160/ns
+      - nrf9151dk/nrf9151/ns
