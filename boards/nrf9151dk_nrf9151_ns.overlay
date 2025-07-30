@@ -1,16 +1,16 @@
 
-&i2c0 {
-    compatible = "nordic,nrf-twim";
-    status = "okay";
-    pinctrl-0 = <&i2c0_default>;
-    pinctrl-1 = <&i2c0_sleep>;
-    pinctrl-names = "default", "sleep";
-    clock-frequency = <I2C_BITRATE_FAST>;
-    //1. SCD41
-    //2. SHT40
+// &i2c0 {
+//     compatible = "nordic,nrf-twim";
+//     status = "okay";
+//     pinctrl-0 = <&i2c0_default>;
+//     pinctrl-1 = <&i2c0_sleep>;
+//     pinctrl-names = "default", "sleep";
+//     clock-frequency = <I2C_BITRATE_FAST>;
+//     //1. SCD41
+//     //2. SHT40
 // 	status = "okay";	scd4x: scd4x@62 {
 // 		status = "okay";
-// 		compatible = "sensirion,scd40";
+// 		compatible = "sensirion,scd41";
 // 		reg = <0x62>;
 // 	};
 
@@ -22,25 +22,25 @@
 //   };
 
 
-};
+// };
 
-&pinctrl {
-    i2c0_default: i2c0_default {
-        group1 {
-            psels = <NRF_PSEL(TWIM_SDA, 0, 9)>,
-                    <NRF_PSEL(TWIM_SCL, 0, 8)>;
-        };
-    };
+// &pinctrl {
+//     i2c0_default: i2c0_default {
+//         group1 {
+//             psels = <NRF_PSEL(TWIM_SDA, 0, 9)>,
+//                     <NRF_PSEL(TWIM_SCL, 0, 8)>;
+//         };
+//     };
 
-    i2c0_sleep: i2c0_sleep {
-        group1 {
-            psels = <NRF_PSEL(TWIM_SDA, 0, 9)>,
-                    <NRF_PSEL(TWIM_SCL, 0, 8)>;
-            low-power-enable;
-        };
-    };
+//     i2c0_sleep: i2c0_sleep {
+//         group1 {
+//             psels = <NRF_PSEL(TWIM_SDA, 0, 9)>,
+//                     <NRF_PSEL(TWIM_SCL, 0, 8)>;
+//             low-power-enable;
+//         };
+//     };
 
-};
+// };
 
 
 
