@@ -56,3 +56,18 @@ target_include_directories(app
     ${CMAKE_CURRENT_SOURCE_DIR}/components/lte_manager
 )
 
+# Add the component sht40 sensor
+target_sources(app PRIVATE
+    components/sht40/sht40.c)
+target_include_directories(app
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/components/sht40
+)
+
+# Add the component scd41 sensor
+target_sources(app PRIVATE
+    components/scd41/scd41.c)
+target_include_directories(app
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/components/scd41
+)
