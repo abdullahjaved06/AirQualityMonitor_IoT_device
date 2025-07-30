@@ -6,21 +6,18 @@
     pinctrl-1 = <&i2c0_sleep>;
     pinctrl-names = "default", "sleep";
     clock-frequency = <I2C_BITRATE_FAST>;
-    //1. SCD41
-    //2. SHT40
-	status = "okay";	scd4x: scd4x@62 {
-		status = "okay";
-		compatible = "sensirion,scd41";
+    status = "okay";    scd4x: scd4x@62 {
+        status = "okay";
+        compatible = "sensirion,scd41";
         mode = <0>;
-		reg = <0x62>;
-	};
-
-  sht4x: sht4x@44 {
-    status = "okay";
-		compatible = "sensirion,sht4x";
-		reg = <0x44>;
-		repeatability = <2>;
-  };
+        reg = <0x62>;
+    };
+    sht4x: sht4x@44 {
+        status = "okay";
+        compatible = "sensirion,sht4x";
+        reg = <0x44>;
+        repeatability = <2>;
+    };
 
 
 };
@@ -43,6 +40,24 @@
 
 };
 
+
+/{
+    CUSTOM_PINS_PCB {
+        compatible = "gpio-keys";
+        green_led: green_led{
+            gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;   /*GPIO PIN P0.11 */
+            label = "Green Led";
+        };
+        blue_led: blue_led{
+            gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;   /*GPIO PIN P0.12 */
+            label = "Blue Led";
+        };
+        red_led: red_led{
+            gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;   /*GPIO PIN P0.13 */
+            label = "Red Led";
+        };
+    };
+};
 
 
 
