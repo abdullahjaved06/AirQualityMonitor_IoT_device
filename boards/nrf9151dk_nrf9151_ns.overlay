@@ -1,13 +1,13 @@
 
-// &i2c0 {
-//     compatible = "nordic,nrf-twim";
-//     status = "okay";
-//     pinctrl-0 = <&i2c0_default>;
-//     pinctrl-1 = <&i2c0_sleep>;
-//     pinctrl-names = "default", "sleep";
-//     clock-frequency = <I2C_BITRATE_FAST>;
-//     //1. SCD41
-//     //2. SHT40
+&i2c0 {
+    compatible = "nordic,nrf-twim";
+    status = "okay";
+    pinctrl-0 = <&i2c0_default>;
+    pinctrl-1 = <&i2c0_sleep>;
+    pinctrl-names = "default", "sleep";
+    clock-frequency = <I2C_BITRATE_FAST>;
+    //1. SCD41
+    //2. SHT40
 // 	status = "okay";	scd4x: scd4x@62 {
 // 		status = "okay";
 // 		compatible = "sensirion,scd40";
@@ -22,7 +22,7 @@
 //   };
 
 
-// };
+};
 
 &pinctrl {
     i2c0_default: i2c0_default {
