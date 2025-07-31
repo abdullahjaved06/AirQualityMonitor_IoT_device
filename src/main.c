@@ -11,6 +11,7 @@
 
 #include "../components/scd41/scd41.h"
 #include "../components/sht40/sht40.h"
+#include "../components/leds/led.h"
 
 void peripherals_init(void);
 LOG_MODULE_REGISTER(MAIN);
@@ -73,15 +74,7 @@ int main(void)
 	while (1) {
 		switch (DEVICE_STATE) {
 
-		case DEVICE_STATE_TEMP_HUM:
-			temp = sht4x_read_temperature();
-			hum = sht4x_read_humidity();
-			break;
-
-		case DEVICE_STATE_CO2:
-			co2 = scd41_read_co2();
-			break;
-
+		
 		case DEVICE_STATE_INIT:
 			LOG_INF("DEVICE STATE : DEVICE INIT\n\r");
 			err = lte_net_mgmt_connect();
@@ -98,11 +91,23 @@ int main(void)
 			DEVICE_STATE = DEVICE_STATE_LTE_CONNECT;
 			break;
 
+
 		case DEVICE_STATE_LTE_CONNECT:
 			if (LTE_CONNECTED) {
 				LOG_INF("DEVICE STATE : LTE CONNECT\n\r");
-				DEVICE_STATE = DEVICE_STATE_AWS_SEND_DATA;
+				DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
 			}
+			break;
+
+		case DEVICE_STATE_TEMP_HUM:
+			temp = sht4x_read_temperature();
+			hum = sht4x_read_humidity();
+			DEVICE_STATE = DEVICE_STATE_CO2;
+			break;
+
+		case DEVICE_STATE_CO2:
+			co2 = scd41_read_co2();
+			DEVICE_STATE = DEVICE_STATE_AWS_SEND_DATA;
 			break;
 
 		case DEVICE_STATE_AWS_SEND_DATA:
@@ -169,7 +174,7 @@ int main(void)
 				device_sleep = false;
 				device_sleep_time = k_uptime_get_32();
 #if CONFIG_AWS_IOT_USE_EDRX
-				DEVICE_STATE = DEVICE_STATE_AWS_SEND_DATA;
+				DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
 #elif CONFIG_AWS_IOT_USE_LTE_POWER_OFF
 				DEVICE_STATE = DEVICE_STATE_INIT;
 #endif
@@ -196,4 +201,6 @@ void peripherals_init(void)
 	} else {
 		LOG_ERR("SHT40 not ready!");
 	}
+
+	leds_init();
 }
