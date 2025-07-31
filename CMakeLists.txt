@@ -71,3 +71,11 @@ target_include_directories(app
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/components/scd41
 )
+
+# Add the component led's
+target_sources(app PRIVATE
+    components/leds/led.c)
+target_include_directories(app
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/components/leds
+)
