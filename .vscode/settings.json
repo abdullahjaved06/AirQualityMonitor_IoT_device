@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "sht40.h": "c"
+        "sht40.h": "c",
+        "led.h": "c"
     }
 }

@@ -8,6 +8,7 @@
 #include <zephyr/net/conn_mgr_monitor.h>
 #include "aws_iot_mqtt.h"
 #include "lte_manager.h"
+#include "led.h"
 
 LOG_MODULE_REGISTER(LTE_MANAGER);
 
@@ -46,10 +47,38 @@ static void lte_event_handler(const struct lte_lc_evt *const evt)
         LOG_INF("eDRX parameter update: eDRX: %f, PTW: %f",
                 (double)evt->edrx_cfg.edrx, (double)evt->edrx_cfg.ptw);
         break;
+
+    case LTE_LC_EVT_NW_REG_STATUS:
+        switch (evt->nw_reg_status)
+        {
+        case LTE_LC_NW_REG_SEARCHING:
+            LOG_INF("LTE is searching for network");
+            stop_solid_leds(); // Custom helper to turn off green & blue
+            start_flashing_green_led();  // You must implement this
+            break;
+
+        case LTE_LC_NW_REG_REGISTERED_HOME:
+        case LTE_LC_NW_REG_REGISTERED_ROAMING:
+            LOG_INF("LTE registered to network");
+            break;
+
+        case LTE_LC_NW_REG_NOT_REGISTERED:
+            LOG_INF("LTE not registered / denied");
+            stop_flashing_green_led();       // Stop blinking
+            gpio_pin_set_dt(&green_led, 0);  // Green OFF
+            gpio_pin_set_dt(&blue_led, 1);   // Solid blue ON
+            break;
+
+        default:
+            break;
+        }
+        break;
+
     default:
         break;
     }
 }
+
 
 static const char *closest_edrx_val(int seconds)
 {
@@ -114,12 +143,18 @@ static void l4_event_handler(struct net_mgmt_event_callback *cb,
     {
     case NET_EVENT_L4_CONNECTED:
         LOG_INF("Network connectivity established");
+          stop_flashing_green_led();   // Stop blinking
+          gpio_pin_set_dt(&green_led, 1);  // Solid green ON
+          gpio_pin_set_dt(&blue_led, 0);   // Blue OFF
 
         LTE_CONNECTED = true;
         on_net_event_l4_connected();
         break;
     case NET_EVENT_L4_DISCONNECTED:
         LOG_INF("Network connectivity lost");
+	    stop_flashing_green_led();       // Stop blinking
+        gpio_pin_set_dt(&green_led, 0);  // Green OFF
+        gpio_pin_set_dt(&blue_led, 1);   // Solid blue ON
         on_net_event_l4_disconnected();
         break;
     default:
@@ -205,5 +240,8 @@ int lte_net_mgmt_disconnect(void)
         return err;
     }
     LOG_INF("LTE Powered Off successfully\n\r");
+      stop_flashing_green_led();       // Stop blinking
+        gpio_pin_set_dt(&green_led, 0);  // Green OFF
+        gpio_pin_set_dt(&blue_led, 1);   // Solid blue ON
     return err;
 }
