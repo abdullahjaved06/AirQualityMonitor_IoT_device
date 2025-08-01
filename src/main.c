@@ -26,11 +26,16 @@ float temp = 0.0f;
 float hum = 0.0f;
 float co2 = 0.0f;
 
+bool high_priority_alert = false;
+bool low_priority_alert = false;
+
+
 bool device_sleep = false;
 
 void publish_named_shadow_state(const char *thing_name, const char *shadow_name)
 {
-	if (!thing_name || !shadow_name) {
+	if (!thing_name || !shadow_name)
+	{
 		LOG_ERR("Thing name or shadow name is NULL");
 		return;
 	}
@@ -54,7 +59,8 @@ void publish_named_shadow_state(const char *thing_name, const char *shadow_name)
 			 temp, hum, co2);
 
 	int err = aws_iot_publish_topic(topic, payload, MQTT_QOS_1_AT_LEAST_ONCE);
-	if (err) {
+	if (err)
+	{
 		LOG_ERR("Failed to publish named shadow: %d", err);
 	}
 }
@@ -71,19 +77,22 @@ int main(void)
 
 	register_lte_lc_event_handler();
 
-	while (1) {
-		switch (DEVICE_STATE) {
+	while (1)
+	{
+		switch (DEVICE_STATE)
+		{
 
-		
 		case DEVICE_STATE_INIT:
 			LOG_INF("DEVICE STATE : DEVICE INIT\n\r");
 			err = lte_net_mgmt_connect();
-			if (err) {
+			if (err)
+			{
 				LOG_ERR("LTE Net mgmt Failed, error: %d", err);
 				FATAL_ERROR();
 			}
 			err = aws_iot_client_init();
-			if (err) {
+			if (err)
+			{
 				LOG_ERR("aws_iot_client_init, error: %d", err);
 				FATAL_ERROR();
 				return err;
@@ -91,9 +100,9 @@ int main(void)
 			DEVICE_STATE = DEVICE_STATE_LTE_CONNECT;
 			break;
 
-
 		case DEVICE_STATE_LTE_CONNECT:
-			if (LTE_CONNECTED) {
+			if (LTE_CONNECTED)
+			{
 				LOG_INF("DEVICE STATE : LTE CONNECT\n\r");
 				DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
 			}
@@ -101,17 +110,43 @@ int main(void)
 
 		case DEVICE_STATE_TEMP_HUM:
 			temp = sht4x_read_temperature();
+			// Check temperature
+			if (temp > TEMP_HIGH_THRESHOLD || temp < TEMP_LOW_THRESHOLD)
+			{
+				high_priority_alert = true;
+			}
 			hum = sht4x_read_humidity();
+			// Check humidity
+			if (hum > HUM_HIGH_THRESHOLD || hum < HUM_LOW_THRESHOLD)
+			{
+				high_priority_alert = true;
+			}
+
+				// Set LED mode accordingly
+			if (high_priority_alert) {
+				start_led_alert(LED_MODE_ALERT_RED);
+			} else if (low_priority_alert) {
+				start_led_alert(LED_MODE_ALERT_ORANGE);
+			} else {
+				stop_led_alert(); // No alerts
+			}
 			DEVICE_STATE = DEVICE_STATE_CO2;
 			break;
 
 		case DEVICE_STATE_CO2:
 			co2 = scd41_read_co2();
+			// Check CO2
+			if (co2 > CO2_HIGH_THRESHOLD) {
+				high_priority_alert = true;
+			} else if (co2 > CO2_MEDIUM_THRESHOLD) {
+				low_priority_alert = true;
+			}
 			DEVICE_STATE = DEVICE_STATE_AWS_SEND_DATA;
 			break;
 
 		case DEVICE_STATE_AWS_SEND_DATA:
-			if (!OTA_STARTED && AWS_IOT_MQTT_CONNECTED) {
+			if (!OTA_STARTED && AWS_IOT_MQTT_CONNECTED)
+			{
 				LOG_INF("DEVICE STATE : AWS SEND DATA\n\r");
 
 				char payload[256];
@@ -124,14 +159,16 @@ int main(void)
 						 temp, hum, co2);
 
 				err = aws_iot_publish_topic(topic, payload, MQTT_QOS_0_AT_MOST_ONCE);
-				if (err) {
+				if (err)
+				{
 					LOG_ERR("Failed to publish sensor data: %d", err);
 				}
 
 				k_msleep(6000);
 				AWS_IOT_WAIT_TIME = k_uptime_get_32();
 
-				if (OTA_STARTED) {
+				if (OTA_STARTED)
+				{
 					DEVICE_STATE = DEVICE_STATE_OTA;
 					break;
 				}
@@ -144,13 +181,16 @@ int main(void)
 			break;
 
 		case DEVICE_STATE_SLEEP:
-			while (1) {
-				if (SHADOW_PUBLISHED || k_uptime_get_32() - AWS_IOT_WAIT_TIME >= TWO_MINUTES_MS) {
+			while (1)
+			{
+				if (SHADOW_PUBLISHED || k_uptime_get_32() - AWS_IOT_WAIT_TIME >= TWO_MINUTES_MS)
+				{
 					break;
 				}
 				k_msleep(500);
 			}
-			if (OTA_STARTED) {
+			if (OTA_STARTED)
+			{
 				DEVICE_STATE = DEVICE_STATE_OTA;
 				break;
 			}
@@ -169,7 +209,8 @@ int main(void)
 			break;
 
 		case DEVICE_STATE_IDLE:
-			if (k_uptime_get_32() - device_sleep_time >= device_sleep_time_minutes) {
+			if (k_uptime_get_32() - device_sleep_time >= device_sleep_time_minutes)
+			{
 				LOG_WRN("Time passed after sleep %lld\n\r", device_sleep_time);
 				device_sleep = false;
 				device_sleep_time = k_uptime_get_32();
@@ -191,14 +232,20 @@ int main(void)
 
 void peripherals_init(void)
 {
-	if (scd41_device_check() == 0) {
+	if (scd41_device_check() == 0)
+	{
 		LOG_INF("SCD41 ready.\n");
-	} else {
+	}
+	else
+	{
 		LOG_ERR("SCD41 not ready!");
 	}
-	if (sht4x_device_check() == 0) {
+	if (sht4x_device_check() == 0)
+	{
 		LOG_INF("SHT40 ready.\n");
-	} else {
+	}
+	else
+	{
 		LOG_ERR("SHT40 not ready!");
 	}
 

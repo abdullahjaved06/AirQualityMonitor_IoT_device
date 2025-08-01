@@ -13,7 +13,20 @@ void flash_green_timer_handler(struct k_timer *timer_id);
 void start_flashing_green_led(void);
 void stop_flashing_green_led(void);
 void stop_solid_leds(void);
+void update_led_from_lte_status(void);
 
+enum led_mode_t {
+    LED_MODE_NORMAL,
+    LED_MODE_ALERT_RED,
+    LED_MODE_ALERT_ORANGE,
+};
+
+static enum led_mode_t current_led_mode = LED_MODE_NORMAL;
+static bool show_alert_color = false;
+
+#define ALERT_BLINK_INTERVAL K_SECONDS(5)
+
+ void alert_led_timer_handler(struct k_timer *timer_id);
 
 
 
