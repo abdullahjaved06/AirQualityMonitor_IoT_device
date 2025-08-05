@@ -4,6 +4,7 @@
         "led.h": "c",
         "log.h": "c",
         "aws_iot_mqtt.h": "c",
-        "scd41.h": "c"
+        "scd41.h": "c",
+        "types.h": "c"
     }
 }

@@ -10,6 +10,9 @@
 #include <zephyr/types.h>
 #include <cJSON.h>
 
+#include "scd41.h"
+#include "sht40.h"
+
 LOG_MODULE_REGISTER(AWS_IOT_MQTT);
 
 #define MODEM_FIRMWARE_VERSION_SIZE_MAX 50
@@ -239,21 +242,54 @@ void handle_shadow_delta(const char *json, size_t len)
         return;
     }
 
+    // Parse existing ones
     cJSON *sleep_time = cJSON_GetObjectItem(state, "sleep_time");
-    cJSON *sensor_enable = cJSON_GetObjectItem(state, "sensor_enable");
-
-    if (sleep_time && cJSON_IsNumber(sleep_time))
-    {
+    if (sleep_time && cJSON_IsNumber(sleep_time)) {
         device_sleep_time_minutes = sleep_time->valueint;
-        // Apply new_sleep_time to your device
         LOG_INF("Updating sleep_time to %d", device_sleep_time_minutes);
     }
 
-    if (sensor_enable && cJSON_IsBool(sensor_enable))
-    {
+    cJSON *sensor_enable = cJSON_GetObjectItem(state, "sensor_enable");
+    if (sensor_enable && cJSON_IsBool(sensor_enable)) {
         sensor_co2_enable = cJSON_IsTrue(sensor_enable);
-        // Apply new_sensor_enable to your device
         LOG_INF("Updating sensor_enable to %d", sensor_co2_enable);
+    }
+
+    // ✅ New: Parse thresholds
+    cJSON *co2_med = cJSON_GetObjectItem(state, "co2_medium_threshold");
+    if (co2_med && cJSON_IsNumber(co2_med)) {
+        co2_medium_threshold = co2_med->valuedouble;
+        LOG_INF("Updated co2_medium_threshold: %.2f", co2_medium_threshold);
+    }
+
+    cJSON *co2_high = cJSON_GetObjectItem(state, "co2_high_threshold");
+    if (co2_high && cJSON_IsNumber(co2_high)) {
+        co2_high_threshold = co2_high->valuedouble;
+        LOG_INF("Updated co2_high_threshold: %.2f", co2_high_threshold);
+    }
+
+    cJSON *temp_high = cJSON_GetObjectItem(state, "temp_high_threshold");
+    if (temp_high && cJSON_IsNumber(temp_high)) {
+        temp_high_threshold = temp_high->valuedouble;
+        LOG_INF("Updated temp_high_threshold: %.2f", temp_high_threshold);
+    }
+
+    cJSON *temp_low = cJSON_GetObjectItem(state, "temp_low_threshold");
+    if (temp_low && cJSON_IsNumber(temp_low)) {
+        temp_low_threshold = temp_low->valuedouble;
+        LOG_INF("Updated temp_low_threshold: %.2f", temp_low_threshold);
+    }
+
+    cJSON *hum_high = cJSON_GetObjectItem(state, "hum_high_threshold");
+    if (hum_high && cJSON_IsNumber(hum_high)) {
+        hum_high_threshold = hum_high->valuedouble;
+        LOG_INF("Updated hum_high_threshold: %.2f", hum_high_threshold);
+    }
+
+    cJSON *hum_low = cJSON_GetObjectItem(state, "hum_low_threshold");
+    if (hum_low && cJSON_IsNumber(hum_low)) {
+        hum_low_threshold = hum_low->valuedouble;
+        LOG_INF("Updated hum_low_threshold: %.2f", hum_low_threshold);
     }
 
     cJSON_Delete(root);
