@@ -2,6 +2,8 @@
     "files.associations": {
         "sht40.h": "c",
         "led.h": "c",
-        "log.h": "c"
+        "log.h": "c",
+        "aws_iot_mqtt.h": "c",
+        "scd41.h": "c"
     }
 }

@@ -4,10 +4,10 @@
 int scd41_device_check(void);
 float scd41_read_co2(void);
 
+//using them as extern to avoid multiple definition error.
+extern float co2_medium_threshold;
+extern float co2_high_threshold;
 
-// --- Thresholds ---
-#define CO2_MEDIUM_THRESHOLD    1000.0f // ppm (low-priority alert)
-#define CO2_HIGH_THRESHOLD      2000.0f // ppm (high-priority alert)
 
 
 #endif /* SCD41_H */

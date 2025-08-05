@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <zephyr/logging/log.h>
 
+float co2_medium_threshold = 1000.0f;
+float co2_high_threshold   = 1500.0f;
+
 LOG_MODULE_REGISTER(CO2);
 
 

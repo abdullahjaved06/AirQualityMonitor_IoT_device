@@ -111,13 +111,13 @@ int main(void)
 		case DEVICE_STATE_TEMP_HUM:
 			temp = sht4x_read_temperature();
 			// Check temperature
-			if (temp > TEMP_HIGH_THRESHOLD || temp < TEMP_LOW_THRESHOLD)
+			if (temp > temp_high_threshold || temp < temp_low_threshold)
 			{
 				high_priority_alert = true;
 			}
 			hum = sht4x_read_humidity();
 			// Check humidity
-			if (hum > HUM_HIGH_THRESHOLD || hum < HUM_LOW_THRESHOLD)
+			if (hum > hum_high_threshold || hum < hum_low_threshold)
 			{
 				high_priority_alert = true;
 			}
@@ -136,9 +136,9 @@ int main(void)
 		case DEVICE_STATE_CO2:
 			co2 = scd41_read_co2();
 			// Check CO2
-			if (co2 > CO2_HIGH_THRESHOLD) {
+			if (co2 > co2_high_threshold) {
 				high_priority_alert = true;
-			} else if (co2 > CO2_MEDIUM_THRESHOLD) {
+			} else if (co2 > co2_medium_threshold) {
 				low_priority_alert = true;
 			}
 			DEVICE_STATE = DEVICE_STATE_AWS_SEND_DATA;

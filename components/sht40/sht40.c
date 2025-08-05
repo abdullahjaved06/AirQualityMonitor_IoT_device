@@ -4,9 +4,16 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/sensor.h>
 #include <stdio.h>
-
-
 #include <zephyr/logging/log.h>
+
+// --- Thresholds ---
+
+float temp_high_threshold = 30.0f;
+float temp_low_threshold  = 5.0f;
+
+float hum_high_threshold  = 80.0f;
+float hum_low_threshold   = 20.0f;
+
 
 LOG_MODULE_REGISTER(TEMP_HUM);
 
