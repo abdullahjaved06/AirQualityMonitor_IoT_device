@@ -101,10 +101,18 @@ static void shadow_update_work_fn(struct k_work *work)
 {
     int err;
     char message[CONFIG_AWS_IOT_JSON_MESSAGE_SIZE_MAX] = {0};
-    struct payload payload = {
-        .state.reported.sleep_time = device_sleep_time_minutes,
-        .state.reported.sensor_co2_enable = sensor_co2_enable,
-    };
+   struct payload payload = {
+	.state.reported.sleep_time = device_sleep_time_minutes,
+	.state.reported.sensor_co2_enable = sensor_co2_enable,
+
+	.state.reported.co2_medium_threshold = co2_medium_threshold,
+	.state.reported.co2_high_threshold = co2_high_threshold,
+	.state.reported.temp_high_threshold = temp_high_threshold,
+	.state.reported.temp_low_threshold = temp_low_threshold,
+	.state.reported.hum_high_threshold = hum_high_threshold,
+	.state.reported.hum_low_threshold = hum_low_threshold,
+};
+
     struct aws_iot_data tx_data = {
         .qos = MQTT_QOS_0_AT_MOST_ONCE,
         .topic.type = AWS_IOT_SHADOW_TOPIC_UPDATE,

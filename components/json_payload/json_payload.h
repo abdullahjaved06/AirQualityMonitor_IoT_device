@@ -11,9 +11,17 @@ struct payload {
 		struct {
 			uint32_t sleep_time;
 			bool sensor_co2_enable;
+
+			float co2_medium_threshold;
+			float co2_high_threshold;
+			float temp_high_threshold;
+			float temp_low_threshold;
+			float hum_high_threshold;
+			float hum_low_threshold;
 		} reported;
 	} state;
 };
+
 
 
 /* @brief Construct a JSON message string.
