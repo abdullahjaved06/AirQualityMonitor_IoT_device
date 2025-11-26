@@ -67,6 +67,10 @@ void publish_named_shadow_state(const char *thing_name, const char *shadow_name)
 
 int main(void)
 {
+	LOG_INF("Custom PCB Firmware.");
+	// LOG_INF("DK Firmware.");
+
+
 	uint64_t device_sleep_time = k_uptime_get_32();
 	LOG_INF("The AWS IoT MQTT started, version: %s\n\r", CONFIG_AWS_IOT_APP_VERSION);
 	peripherals_init();
