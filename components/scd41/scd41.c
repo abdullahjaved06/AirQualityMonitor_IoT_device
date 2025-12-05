@@ -12,7 +12,7 @@ float co2_high_threshold   = 1500.0f;
 LOG_MODULE_REGISTER(CO2);
 
 
-static const struct device *dev = DEVICE_DT_GET_ONE(sensirion_scd41);
+static const struct device *dev = DEVICE_DT_GET_ONE(sensirion_scd40);
 
 int scd41_device_check(void)
 {
