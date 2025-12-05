@@ -74,7 +74,7 @@ int main(void)
 	uint64_t device_sleep_time = k_uptime_get_32();
 	LOG_INF("The AWS IoT MQTT started, version: %s\n\r", CONFIG_AWS_IOT_APP_VERSION);
 	peripherals_init();
-	enable_regulator();  // enable npm1300 to get sensors working.
+	enable_regulator();  // enable npm1300 to get sensors.
 	int err;
 
 	const char *topic = MY_CUSTOM_TOPIC_PUB;
