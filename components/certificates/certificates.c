@@ -11,54 +11,59 @@ LOG_MODULE_REGISTER(CERTS);
 
 static const char device_cert[] =
     "-----BEGIN CERTIFICATE-----\n"
-    "MIIDWTCCAkGgAwIBAgIUU6gMTfeCfRbBeQU2C8mqTldIiJIwDQYJKoZIhvcNAQEL\n"
-    "BQAwTTFLMEkGA1UECwxCQW1hem9uIFdlYiBTZXJ2aWNlcyBPPUFtYXpvbi5jb20g\n"
-    "SW5jLiBMPVNlYXR0bGUgU1Q9V2FzaGluZ3RvbiBDPVVTMB4XDTI1MDUxOTA3NTcx\n"
-    "M1oXDTQ5MTIzMTIzNTk1OVowHjEcMBoGA1UEAwwTQVdTIElvVCBDZXJ0aWZpY2F0\n"
-    "ZTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALJlYIo+uhCLCgs75qTf\n"
-    "uIa850vdwpL1d4+xv9L7yu/B9mFOOJWMn3/b1k1pWg34OXiR+MzDC4A37t3TCxnD\n"
-    "uZuQYmv0kbMragtHdibBdijEZt8fxP0rzP7KF0SZYAM6x75gjtUEukDNoLpgOh8z\n"
-    "h1mqt4YONKzNs+Sk7qy+5xMnDk5VFDHsKeL6Z17Lud11y5uhM879mv3fPSAnsgMe\n"
-    "HHcTrI3zKgf/kkVguZRfiO1Yvdxe2kZudTQfLCAY1vJPyDIXIJ/uuJKbVg5P3ddD\n"
-    "mWxJOwtqOCmMJfogSq91+CVk1689Tm8lSpPWSi7lOKrEe3m7hYt+hWyegymn6Rvx\n"
-    "UucCAwEAAaNgMF4wHwYDVR0jBBgwFoAUwRga6pEjB82RvA+8JqyNBPJhbiMwHQYD\n"
-    "VR0OBBYEFCzsV1PnuwbkmR2N8Fta1zOnewvxMAwGA1UdEwEB/wQCMAAwDgYDVR0P\n"
-    "AQH/BAQDAgeAMA0GCSqGSIb3DQEBCwUAA4IBAQBwqaTTvVs54LY8ufLc8JEagNYj\n"
-    "PiFbml7tEshCOknNpK0dKyPZJ8ig2UZsSoyiOnL6Zoyi0DioAl76t4IIcZWePkUB\n"
-    "gFbNlD/7TCX9BYj2ytC+yMr3X+9NpEewKxMbVFocalQYpLXV0pZayoU8simQayAg\n"
-    "Jf+rFthN+PzrINe5cow02QAnCYdHBXUR9CEFg7/jQWSpyqrmdiisIr6mlsq86RhF\n"
-    "6wDKaDCb1iGcgaaP6FxdjKAWU7xOd2b+UlxjNGW3gi92jHOmbfcO7gHqmSxRxPJR\n"
-    "hXYXgvk73TtA1cAovuz+1ALvdEpJETdlH5TlD6KerwOOBZYSjygvJMg+Gnok\n"
-    "-----END CERTIFICATE-----\n";
+"MIIDWTCCAkGgAwIBAgIUf7f4r9VPZaEDy/GbQ1V4ptSEPUEwDQYJKoZIhvcNAQEL\n"
+"BQAwTTFLMEkGA1UECwxCQW1hem9uIFdlYiBTZXJ2aWNlcyBPPUFtYXpvbi5jb20g\n"
+"SW5jLiBMPVNlYXR0bGUgU1Q9V2FzaGluZ3RvbiBDPVVTMB4XDTI1MTIxOTE5NDUx\n"
+"MVoXDTQ5MTIzMTIzNTk1OVowHjEcMBoGA1UEAwwTQVdTIElvVCBDZXJ0aWZpY2F0\n"
+"ZTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAObJLUdqyizoXIJsqbDr\n"
+"ylPhlwjawHPwRhP2dpPab8gZbmut7IRsUFAwb7DtKzU7g93vFOGSoBs86TLJZzRg\n"
+"3KSiQQfFQWnHWdHXw7jPQnRHYErGtIBed7LdHOWfjFerZcqY45dQOwSKpI8SV0tK\n"
+"esXV9bKTM01OQSGgW/zVa1ZF4e1vGUwn61YxK435VLioncCBAD/TC0KDkPZw/ga+\n"
+"RNAvfnc//S2I/epochRXH96RUwVH27A+0mkluETpFv+DtVrxHGWEbmnntTfQdF9f\n"
+"BpK3/FtSfjXL+hZj5A4cax1k3ycp3Td2aqMxCX2xrfRhmOY8sP2ZV8d1e18NFhd/\n"
+"D/ECAwEAAaNgMF4wHwYDVR0jBBgwFoAU4org8N5iiXPEJpeVSByX+R744dMwHQYD\n"
+"VR0OBBYEFHDK+1C240y7uis6PTUV5DMp/favMAwGA1UdEwEB/wQCMAAwDgYDVR0P\n"
+"AQH/BAQDAgeAMA0GCSqGSIb3DQEBCwUAA4IBAQAZphQYkpcbjO+f9U+m+gVbzm7j\n"
+"mo5hJSULdpRTlAPJSwFUU9dCGVHs9BXj7TcvDxrSBLaKT7VgEZoFSfYd1SlWjQQQ\n"
+"QqViM3BpVuKUoPBgXO6FTdcGx2V6RErN+eMop8VohYkaFhGnv3kR9WCQ5P3x6vAS\n"
+"z5zgJ3TmBMFzf519WMiSUcpyJppLS4Ob/GMMyc8U+GgnxnpLogu33obzf34iZVXx\n"
+"PD7MFs6/n1tf+yanIc4iNwMAQ7WHPR0ueUBo+6Ko//DgsUNCPirHKV+FuCaHXLNA\n"
+"ZmiYm02ijyA+h1aRvS/hmY4C2EdoVr924kYrJvQSBF/AxZlCQ5KC2FBgoeMr\n"
+"-----END CERTIFICATE-----\n";
+
+
+
 
 static const char private_key[] =
     "-----BEGIN RSA PRIVATE KEY-----\n"
-    "MIIEogIBAAKCAQEAsmVgij66EIsKCzvmpN+4hrznS93CkvV3j7G/0vvK78H2YU44\n"
-    "lYyff9vWTWlaDfg5eJH4zMMLgDfu3dMLGcO5m5Bia/SRsytqC0d2JsF2KMRm3x/E\n"
-    "/SvM/soXRJlgAzrHvmCO1QS6QM2gumA6HzOHWaq3hg40rM2z5KTurL7nEycOTlUU\n"
-    "Mewp4vpnXsu53XXLm6Ezzv2a/d89ICeyAx4cdxOsjfMqB/+SRWC5lF+I7Vi93F7a\n"
-    "Rm51NB8sIBjW8k/IMhcgn+64kptWDk/d10OZbEk7C2o4KYwl+iBKr3X4JWTXrz1O\n"
-    "byVKk9ZKLuU4qsR7ebuFi36FbJ6DKafpG/FS5wIDAQABAoIBACDq/fZkfrbgwRiz\n"
-    "k+qmcYlDQDbKk8XET6yPMwM+fQLiupDX+y71RNU1/oRIRVrAi/JIlS1LbErbh1Md\n"
-    "RzYY3J3s9YxQE7aI80djh1S9bA03uHfBh/rjYy88oTCCUKon5YWmkZSTC787ckYR\n"
-    "zYfGXVpZWwX8hxG/30r4eCYeD8uDoT6q85YHzrCJBiZyw6Tz/HL287B/Eao2hNGN\n"
-    "Ef0+QRN5lTCUExSB0OTN0q0qRqCO05Ddo5DwXk6om2UVa4U9IWW4ivlnwibvRWya\n"
-    "8vbSRkaRTIhHcEndN6VzFL7vsGkcXNvUya85DL3enr9ftW0V6ps0iMUjP4/cuTAE\n"
-    "B1DKTjkCgYEA6WUsEsL6oC0VgWygKlYiHLAkTqqNsP9xJMOAcd/k69wKLUdknN6s\n"
-    "Ems+56n8SrXqOba/25x9pSAXXQq0VIhpelyNGxma286V36M0JBpC5W8lpYV3xoez\n"
-    "tgs5T0Wx/iPSiOUW+6y5nEaxeDMKoBHeF15rO6fek8IGGOwoXrykX00CgYEAw6yM\n"
-    "Y9QaZoqGPGQrIqPOsHzJBvCu8+UmalPvFm1wDcmzjplH39uCl7JcbXJLn12nX85L\n"
-    "IlfOJ0uJxBUD9vqZVxwDTonjwl/Gn+RAjErwCnKNg1ObbRh3o/lt3ljtP9OeKcga\n"
-    "kDwbczg4juCZcPkFumPblTzPfx37p85VcvEUiQMCgYAHGebvYzNQ8E45M97jqt86\n"
-    "1Dkmk5XgDsWYgsJDtLY4XueIXSW4iCXgIZc2YTul4kcQHnlT6zz/ayyKziqSb9wV\n"
-    "tv8sFelaSrzQoxyRBKOIa4tPr/Hm/nX/UfQab1ptCxX6yE2ctrKnCJeZuqPWHvUM\n"
-    "7PiCRidFg5+/3l+UElVF+QKBgDu+cVcBqdXpMbc6tljrPu5wC0kNL73UF3ibjAKD\n"
-    "A5WSIjrF3kYhVaxPjxzzqtdL1xDPge1Ide9VhwjRidZdCXipWvEd9OaiK5kiLfsn\n"
-    "3kayVzbjzi7vK4hrXfpnmHjGeiIzsLidQZxabBpjxTXTMsaIOsFEQe6EDxRbUYe4\n"
-    "yBZVAoGAIpleT7xIv+5tlUr6dPLjzmfYDXFmx7Z1vPHX/tyYrH05vuOEWjh0pX73\n"
-    "pmutmcQagke85y2lqJGlU33D7y1QxIdjh5HWe+0Wy5LSdnZpIL4vOz/GJ5MYt3z+\n"
-    "EAbv8fFnB7/fdznPtGmCIkC2WT4X8yzZqDietr42tC0evfQp2sY=\n"
-    "-----END RSA PRIVATE KEY-----\n";
+"MIIEpAIBAAKCAQEA5sktR2rKLOhcgmypsOvKU+GXCNrAc/BGE/Z2k9pvyBlua63s\n"
+"hGxQUDBvsO0rNTuD3e8U4ZKgGzzpMslnNGDcpKJBB8VBacdZ0dfDuM9CdEdgSsa0\n"
+"gF53st0c5Z+MV6tlypjjl1A7BIqkjxJXS0p6xdX1spMzTU5BIaBb/NVrVkXh7W8Z\n"
+"TCfrVjErjflUuKidwIEAP9MLQoOQ9nD+Br5E0C9+dz/9LYj96mhyFFcf3pFTBUfb\n"
+"sD7SaSW4ROkW/4O1WvEcZYRuaee1N9B0X18Gkrf8W1J+Ncv6FmPkDhxrHWTfJynd\n"
+"N3ZqozEJfbGt9GGY5jyw/ZlXx3V7Xw0WF38P8QIDAQABAoIBAQDlfzryoQRJoguU\n"
+"eyBH2kJKJbQ+zuHAqTfW1ClYoEi2cGu40qy3hspa47+97isgdX2NbhmSs29ZhrnT\n"
+"kip6ELR5VwxaANMqsF3maaytFBXecbgUxAJtAQQBLxZ0VbOG3t+Ll3wDVXpK6t/3\n"
+"kmKScY8jOsBogy7p+h6UpNW02Doz/8ijSugrfHTpKES79TxRL5HE0A8MztX0UIMm\n"
+"jPx0Nqq6onvWOI1na6WzyJZMXOGWYjiTqIkYiDwGgvkSMZjCP2F6NzxTR/9Npngk\n"
+"QJ9SXcgMO/4UIrkPk+7MVihFAHqRCAq/RsUOKZpmJ/GRqZe4kiv6TEyD2TymzF2J\n"
+"iqJt6p7RAoGBAPqnJ9BvJsG2npsbKbyU+Vu84Ke1LISd9x+ECrvRHRLg4nuHa5zZ\n"
+"m8p6kdU90OVOpKpFWD0NtGUdHcYsztKcDtIVDy5F9DXrbQtui0p3x575nQNNjPXE\n"
+"6WeQorjfGoAyQgLBy5e3ediQ65hhMyochmxCtTNiwWwNSSc9BYMKUlEFAoGBAOu1\n"
+"hlpSgRCWQxxF8adtDvyMMz4fHVFARgGNzTD2141+iwfkMGPlCgxx0COGnBvOz4M7\n"
+"kManiDaVRmCGYtbohHbBkI+ROvZZhjNx0ba5YWo0zu5SV39bokd6fSaZT7xNKQNj\n"
+"pUxv8gp/Nmz5/il00hQfGmdB1UJuwspSorRC+Wb9AoGAAWVe7mVAFQIcXgbHs7os\n"
+"rVse8TAsIEz07GMC4Ero24sPF9sIOWZo3LbUCxj+CdjnR998/1INOCbyXIExYbDm\n"
+"0Dq3y+0t0AMQp2ilM/P406TWQAd1ioTfO+ltTpRHhIFDJtrHdH/cGN2twjqAW3Kv\n"
+"OPkiIzgglaZ5StOnLTSogrUCgYEAqTKQ0t1OkF2Mpwr+QLTkgR0S25DyNpTwq8Ti\n"
+"ejd227bujiebJNoQsIYyZo4GGWAHTajAcBlqieP1tOxCnwohrC2eW7Bgpt30m5Ek\n"
+"fQnth5OIx0KMVHuuraiblc2PkxfATRKGYawqDqbqpqd9brzQ4GjDR0PWle10Hk/b\n"
+"Q5Kf/PECgYB0j/lrJeZTmRh2ZzVVaYOvcPn/SDmWQSk4zQP9dzLKTj+LT5jSXZiN\n"
+"lQfjkneltkKmOscLYVNauHawUr2cwWaO4D/tuoDtto/tdBpY2FB8XBuM9A6tTw/R\n"
+"oh6PS8aqKznsUowVGL6axoONtIxuAOzeYnUFRplIK9O1nmCwrfnKAw==\n"
+"-----END RSA PRIVATE KEY-----\n";
+
+
 
 static const char root_ca[] =
     "-----BEGIN CERTIFICATE-----\n"
@@ -82,6 +87,7 @@ static const char root_ca[] =
     "rqXRfboQnoZsG4q5WTP468SQvvG5\n"
     "-----END CERTIFICATE-----\n";
 
+  
 #define MQTT_SEC_TAG 30
 
 const char *modem_key_mgmt_cred_type_str(enum modem_key_mgmt_cred_type key)
