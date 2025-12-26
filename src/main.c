@@ -30,7 +30,7 @@ uint64_t AWS_IOT_WAIT_TIME = 0;
 float temp = 0.0f;
 float hum = 0.0f;
 float co2 = 0.0f;
-
+float voltage=0.0f;
 bool high_priority_alert = false;
 bool low_priority_alert = false;
 
@@ -122,8 +122,8 @@ int main(void)
 			break;
 
 		case DEVICE_BATTERY_FUEL_GUAGE:
-			float v = read_battery_voltage();
-    		LOG_INF("Battery voltage (fresh): %.3f V\n", (double)v);
+			 voltage = read_battery_voltage();
+    		LOG_INF("Battery voltage (fresh): %.3f V\n", (double)voltage);
 			DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
     		break;
 
@@ -174,9 +174,10 @@ int main(void)
 						 "{"
 						 "\"temperature\": %.2f,"
 						 "\"humidity\": %.2f,"
-						 "\"co2\": %.2f"
+						 "\"co2\": %.2f,"
+						 "\"voltage\": %.2f"
 						 "}",
-						 temp, hum, co2);
+						 temp, hum, co2,voltage);
 
 				err = aws_iot_publish_topic(topic, payload, MQTT_QOS_0_AT_MOST_ONCE);
 				if (err)
