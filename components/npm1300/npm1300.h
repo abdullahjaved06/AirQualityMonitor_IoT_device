@@ -32,7 +32,7 @@ static const struct device *leds = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_leds));
 static const struct device *regulators = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_regulators));
 // static const struct device *ldsw1 = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_ldo1));
 static const struct device *ldsw2 = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_ldo2));
-static const struct device *charger = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_charger));
+ const struct device *charger = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_charger));
 // const struct device *npm1300_gpio = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_gpio));
 
 static void event_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
@@ -41,6 +41,6 @@ void enable_regulator();
 
 int fuel_gauge_init(const struct device *charger);
 int fuel_gauge_update(const struct device *charger, bool vbus_connected);
-
+// float read_battery_voltage(void);
 
 #endif /* NPM1300_H */

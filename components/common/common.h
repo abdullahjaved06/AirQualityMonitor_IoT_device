@@ -18,6 +18,7 @@ typedef enum
     DEVICE_STATE_OTA,
     DEVICE_STATE_TEMP_HUM,
     DEVICE_STATE_CO2,
+    DEVICE_BATTERY_FUEL_GUAGE,
 } SystemState;
 
 extern SystemState DEVICE_STATE;

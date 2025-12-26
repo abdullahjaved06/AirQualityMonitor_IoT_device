@@ -301,3 +301,8 @@ int fuel_gauge_update(const struct device *charger, bool vbus_connected)
 
 	return 0;
 }
+
+
+
+
+

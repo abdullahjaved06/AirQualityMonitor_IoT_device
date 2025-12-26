@@ -12,8 +12,13 @@
 #include "../components/scd41/scd41.h"
 #include "../components/sht40/sht40.h"
 #include "../components/leds/led.h"
+#include <zephyr/drivers/sensor.h>
+#include <zephyr/kernel.h>
+
+extern const struct device *charger;   // declare from your other file
 
 void peripherals_init(void);
+float read_battery_voltage(void);
 LOG_MODULE_REGISTER(MAIN);
 
 #define ONE_MINUTE_MS 60000
@@ -112,9 +117,16 @@ int main(void)
 			if (LTE_CONNECTED)
 			{
 				LOG_INF("DEVICE STATE : LTE CONNECT\n\r");
-				DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
+				DEVICE_STATE = DEVICE_BATTERY_FUEL_GUAGE;
 			}
 			break;
+
+		case DEVICE_BATTERY_FUEL_GUAGE:
+			float v = read_battery_voltage();
+    		LOG_INF("Battery voltage (fresh): %.3f V\n", (double)v);
+			DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
+    		break;
+
 
 		case DEVICE_STATE_TEMP_HUM:
 			temp = sht4x_read_temperature();
@@ -258,4 +270,31 @@ void peripherals_init(void)
 	}
 
 	leds_init();
+}
+
+
+float read_battery_voltage(void)
+{
+    struct sensor_value val;
+    float voltage;
+
+    if (!device_is_ready(charger)) {
+        printk("Charger not ready!\n");
+        return -1.0f;
+    }
+
+    /* Trigger fresh measurement */
+    if (sensor_sample_fetch(charger) < 0) {
+        printk("Sensor fetch failed\n");
+        return -1.0f;
+    }
+
+    /* Read voltage */
+    if (sensor_channel_get(charger, SENSOR_CHAN_GAUGE_VOLTAGE, &val) < 0) {
+        printk("Voltage read failed\n");
+        return -1.0f;
+    }
+
+    voltage = (float)val.val1 + ((float)val.val2 / 1000000.0f);
+    return voltage;
 }
