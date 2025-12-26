@@ -101,51 +101,58 @@ static void shadow_update_work_fn(struct k_work *work)
 {
     int err;
     char message[CONFIG_AWS_IOT_JSON_MESSAGE_SIZE_MAX] = {0};
-   struct payload payload = {
-	.state.reported.sleep_time = device_sleep_time_minutes,
-	.state.reported.sensor_co2_enable = sensor_co2_enable,
 
-	.state.reported.co2_medium_threshold = co2_medium_threshold,
-	.state.reported.co2_high_threshold = co2_high_threshold,
-	.state.reported.temp_high_threshold = temp_high_threshold,
-	.state.reported.temp_low_threshold = temp_low_threshold,
-	.state.reported.hum_high_threshold = hum_high_threshold,
-	.state.reported.hum_low_threshold = hum_low_threshold,
-};
+    // Constructing the payload with the updated configuration values for the reported state
+    struct payload payload = {
+        .state.reported.sleep_time = device_sleep_time_minutes,  // Current sleep time
+        .state.reported.sensor_co2_enable = sensor_co2_enable,    // CO2 sensor enable state
+        .state.reported.co2_medium_threshold = co2_medium_threshold, // CO2 medium threshold
+        .state.reported.co2_high_threshold = co2_high_threshold,  // CO2 high threshold
+        .state.reported.temp_high_threshold = temp_high_threshold, // Temperature high threshold
+        .state.reported.temp_low_threshold = temp_low_threshold,   // Temperature low threshold
+        .state.reported.hum_high_threshold = hum_high_threshold,   // Humidity high threshold
+        .state.reported.hum_low_threshold = hum_low_threshold,     // Humidity low threshold
+    };
+
+    // Create the topic to update the device shadow
+    char topic[128];
+    snprintf(topic, sizeof(topic), "$aws/things/%s/shadow/update", DEVICE_THING_NAME);
 
     struct aws_iot_data tx_data = {
-        .qos = MQTT_QOS_0_AT_MOST_ONCE,
+        .qos = MQTT_QOS_1_AT_LEAST_ONCE,
         .topic.type = AWS_IOT_SHADOW_TOPIC_UPDATE,
     };
 
+    // Construct the shadow update payload as a JSON message
     err = json_payload_construct(message, sizeof(message), &payload);
     if (err)
     {
-        LOG_ERR("json_payload_construct, error: %d", err);
-        FATAL_ERROR();
+        LOG_ERR("json_payload_construct failed, error: %d", err);
         return;
     }
 
     tx_data.ptr = message;
     tx_data.len = strlen(message);
 
-    LOG_INF("Publishing message:");
+    LOG_INF("Publishing Shadow Update:");
     LOG_INF("DATA : %s", message);
-    LOG_WRN("Shadow Topic : %d", AWS_IOT_SHADOW_TOPIC_UPDATE);
+    LOG_WRN("Shadow Update Topic: %s", topic);
 
+    // Send the shadow update
     err = aws_iot_send(&tx_data);
     if (err)
     {
-        LOG_ERR("aws_iot_send, error: %d", err);
-        FATAL_ERROR();
+        LOG_ERR("aws_iot_send failed, error: %d", err);
         return;
     }
 
-    (void)k_work_reschedule(&shadow_update_work,
-                            K_SECONDS(CONFIG_AWS_IOT_PUBLICATION_INTERVAL_SECONDS));
+    // Schedule the next shadow update
+    (void)k_work_reschedule(&shadow_update_work, K_SECONDS(CONFIG_AWS_IOT_PUBLICATION_INTERVAL_SECONDS));
 
     SHADOW_PUBLISHED = true;
 }
+
+
 
 static void connect_work_fn(struct k_work *work)
 {
