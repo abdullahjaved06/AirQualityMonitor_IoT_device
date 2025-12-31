@@ -16,7 +16,7 @@
 #include <zephyr/kernel.h>
 
 extern const struct device *charger;   // declare from your other file
-
+extern volatile bool vbus_connected;
 void peripherals_init(void);
 float read_battery_voltage(void);
 LOG_MODULE_REGISTER(MAIN);
@@ -31,6 +31,8 @@ float temp = 0.0f;
 float hum = 0.0f;
 float co2 = 0.0f;
 float voltage=0.0f;
+char power_source[]="";
+
 bool high_priority_alert = false;
 bool low_priority_alert = false;
 
@@ -161,6 +163,16 @@ int main(void)
 			} else if (co2 > co2_medium_threshold) {
 				low_priority_alert = true;
 			}
+			DEVICE_STATE = DEVICE_STATE_POWER_SOURCE;
+			break;
+		case DEVICE_STATE_POWER_SOURCE:
+			if (vbus_connected == true) {
+			strcpy(power_source, "VBUS");
+				LOG_INF("Power Source: VBUS");
+			} else {
+				strcpy(power_source, "BATTERY");
+				LOG_INF("Power Source: BATTERY");
+			}
 			DEVICE_STATE = DEVICE_STATE_AWS_SEND_DATA;
 			break;
 
@@ -171,13 +183,15 @@ int main(void)
 
 				char payload[256];
 				snprintf(payload, sizeof(payload),
-						 "{"
-						 "\"temperature\": %.2f,"
-						 "\"humidity\": %.2f,"
-						 "\"co2\": %.2f,"
-						 "\"voltage\": %.2f"
-						 "}",
-						 temp, hum, co2,voltage);
+					"{"
+					"\"temperature\": %.2f,"
+					"\"humidity\": %.2f,"
+					"\"co2\": %.2f,"
+					"\"voltage\": %.2f,"
+					"\"powersource\": \"%s\""
+					"}",
+					temp, hum, co2, voltage, power_source);
+
 
 				err = aws_iot_publish_topic(topic, payload, MQTT_QOS_0_AT_MOST_ONCE);
 				if (err)

@@ -19,6 +19,7 @@ typedef enum
     DEVICE_STATE_TEMP_HUM,
     DEVICE_STATE_CO2,
     DEVICE_BATTERY_FUEL_GUAGE,
+    DEVICE_STATE_POWER_SOURCE,
 } SystemState;
 
 extern SystemState DEVICE_STATE;
