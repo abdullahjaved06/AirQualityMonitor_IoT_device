@@ -41,14 +41,8 @@
    npm1300_ek_pmic: pmic@6b {
        compatible = "nordic,npm1300";
        reg = <0x6b>;
-
-       
-    // ship-to-active-time = <96>;
-
-       
-    // long-press-reset = "one_button";
-
-
+       host-int-gpios = <&gpio0 5 0>;
+	   pmic-int-pin = <3>;
        npm1300_ek_gpio: gpio-controller {
            compatible = "nordic,npm1300-gpio";
            gpio-controller;
@@ -58,47 +52,25 @@
 
        npm1300_ek_regulators: regulators {
            compatible = "nordic,npm1300-regulator";
-
-           
+    
 npm1300_ek_buck1: BUCK1 {
     regulator-min-microvolt = <1000000>;
     regulator-max-microvolt = <3300000>;
     
-    retention-microvolt = <1200000>;
-    
-    
-    
-    
-    
+    retention-microvolt = <1200000>;   
 };
-
-
-
 npm1300_ek_buck2: BUCK2 {
     regulator-min-microvolt = <1000000>;
     regulator-max-microvolt = <3300000>;
     
-    retention-microvolt = <1800000>;
-    
-    
-    
-    
-    
+    retention-microvolt = <1800000>;  
 };
-
-
-            
 npm1300_ek_ldo1: LDO1 {
     regulator-min-microvolt = <1000000>;
     regulator-max-microvolt = <3300000>;
     
-    regulator-initial-mode = <NPM1300_LDSW_MODE_LDSW>;
-    
-    
+    regulator-initial-mode = <NPM1300_LDSW_MODE_LDSW>;    
 };
-
-
-
 npm1300_ek_ldo2: LDO2 {
     regulator-min-microvolt = <1000000>;
     regulator-max-microvolt = <3300000>;
@@ -107,10 +79,7 @@ npm1300_ek_ldo2: LDO2 {
     
     regulator-boot-on;
 };
-
-       };
-
-       
+       };  
 npm1300_ek_charger: charger {
     compatible = "nordic,npm1300-charger";
     term-microvolt = <4000000>;
@@ -123,11 +92,8 @@ npm1300_ek_charger: charger {
     thermistor-ohms = <10000>;
     thermistor-beta = <3380>;
     
-    charging-enable;
-    
-};
-
-       
+    charging-enable;  
+};      
 npm1300_ek_leds: leds {
     compatible = "nordic,npm1300-led";
     nordic,led0-mode = "charging";    
