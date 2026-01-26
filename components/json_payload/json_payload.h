@@ -9,6 +9,8 @@ struct payload {
 		struct {
 			uint32_t sleep_time;
 			bool sensor_enable;
+			bool lsout_enable;
+			uint32_t power_on_delay;
 		} reported;
 	} state;
 };

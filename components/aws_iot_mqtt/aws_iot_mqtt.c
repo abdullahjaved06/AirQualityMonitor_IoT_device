@@ -130,8 +130,19 @@ static void handle_shadow_get_accepted_simple(const char *json, size_t len)
 		sensor_co2_enable = cJSON_IsTrue(sensor_enable);
 		LOG_INF("GET: sensor_enable -> %d", sensor_co2_enable);
 	}
+	cJSON *lsout_enable = cJSON_GetObjectItem(desired, "lsout_feature");
+	if(lsout_enable && cJSON_IsBool(lsout_enable)) {
+		lsout_feature = cJSON_IsTrue(lsout_enable);
+		LOG_INF("GET: LSOUT Value -> %d", lsout_feature);
+	}
+	cJSON *power_on_delay = cJSON_GetObjectItem(state, "poweron_delay");
+	if (power_on_delay && cJSON_IsNumber(power_on_delay)) {
+		poweron_delay = power_on_delay->valueint; 
+		LOG_INF("GET: poweron_delay -> %d", poweron_delay);
+	}
 
 	cJSON_Delete(root);
+
 
 	/* publish reported immediately */
 	(void)k_work_reschedule(&shadow_update_work, K_NO_WAIT);
@@ -163,6 +174,16 @@ static void handle_shadow_delta_simple(const char *json, size_t len)
 	if (sensor_enable && cJSON_IsBool(sensor_enable)) {
 		sensor_co2_enable = cJSON_IsTrue(sensor_enable);
 		LOG_INF("DELTA: sensor_enable -> %d", sensor_co2_enable);
+	}
+	cJSON *lsout_enable = cJSON_GetObjectItem(state, "lsout_feature");
+	if(lsout_enable && cJSON_IsBool(lsout_enable)) {
+		lsout_feature = cJSON_IsTrue(lsout_enable);
+		LOG_INF("DELTA: LSOUT Value -> %d", lsout_feature);
+	}
+	cJSON *power_on_delay = cJSON_GetObjectItem(state, "poweron_delay");
+	if (power_on_delay && cJSON_IsNumber(power_on_delay)) {
+		poweron_delay = power_on_delay->valueint; 
+		LOG_INF("DELTA: poweron_delay -> %d", poweron_delay);
 	}
 
 	cJSON_Delete(root);
@@ -219,55 +240,67 @@ static int app_topics_subscribe(void)
 
 static void shadow_update_work_fn(struct k_work *work)
 {
-	ARG_UNUSED(work);
+    ARG_UNUSED(work);
 
-	int err;
-	char message[CONFIG_AWS_IOT_JSON_MESSAGE_SIZE_MAX];
+    int err;
+    char message[CONFIG_AWS_IOT_JSON_MESSAGE_SIZE_MAX];
 
-	memset(message, 0, sizeof(message));
+    memset(message, 0, sizeof(message));
 
-	struct payload payload = {
-		.state.reported.sleep_time = device_sleep_time_minutes,
-		.state.reported.sensor_enable = sensor_co2_enable,
-	};
+    struct payload payload = {
+        .state.reported.sleep_time = device_sleep_time_minutes,
+        .state.reported.sensor_enable = sensor_co2_enable,
+        .state.reported.lsout_enable = lsout_feature,
+        .state.reported.power_on_delay = poweron_delay,
+    };
 
-	struct aws_iot_data tx_data = {
-		.qos = MQTT_QOS_1_AT_LEAST_ONCE,
-		.topic.type = AWS_IOT_SHADOW_TOPIC_UPDATE,
-	};
+    // Add a check to compare the previous state with the new one
+    static struct payload last_payload;
+    if (memcmp(&last_payload, &payload, sizeof(payload)) == 0) {
+        LOG_INF("No change in shadow state, skipping update.");
+        return; // No change, skip update
+    }
 
-	err = json_payload_construct(message, sizeof(message), &payload);
-	if (err) {
-		LOG_ERR("json_payload_construct failed, error: %d", err);
-		return;
-	}
+    // Save the new payload state
+    last_payload = payload;
 
-	message[sizeof(message) - 1] = '\0';
+    struct aws_iot_data tx_data = {
+        .qos = MQTT_QOS_1_AT_LEAST_ONCE,
+        .topic.type = AWS_IOT_SHADOW_TOPIC_UPDATE,
+    };
 
-	tx_data.ptr = message;
-	tx_data.len = strlen(message);
+    err = json_payload_construct(message, sizeof(message), &payload);
+    if (err) {
+        LOG_ERR("json_payload_construct failed, error: %d", err);
+        return;
+    }
 
-	LOG_INF("Shadow JSON len=%d", (int)tx_data.len);
+    message[sizeof(message) - 1] = '\0';
 
-	size_t dump_len = tx_data.len;
-	if (dump_len > 64) dump_len = 64;
-	LOG_HEXDUMP_INF(message, dump_len, "Shadow JSON preview");
+    tx_data.ptr = message;
+    tx_data.len = strlen(message);
 
-	LOG_INF("Publishing Shadow Update:");
-	LOG_INF("THING: %s", DEVICE_THING_NAME);
-	LOG_INF("DATA : %s", message);
+    LOG_INF("Shadow JSON len=%d", (int)tx_data.len);
 
-	err = aws_iot_send(&tx_data);
-	if (err) {
-		LOG_ERR("aws_iot_send (shadow update) failed, error: %d", err);
-		return;
-	}
+    size_t dump_len = tx_data.len;
+    if (dump_len > 64) dump_len = 64;
+    LOG_HEXDUMP_INF(message, dump_len, "Shadow JSON preview");
 
-	(void)k_work_reschedule(&shadow_update_work,
-				K_SECONDS(CONFIG_AWS_IOT_PUBLICATION_INTERVAL_SECONDS));
+    LOG_INF("Publishing Shadow Update:");
+    LOG_INF("THING: %s", DEVICE_THING_NAME);
+    LOG_INF("DATA : %s", message);
 
-	SHADOW_PUBLISHED = true;
+    err = aws_iot_send(&tx_data);
+    if (err) {
+        LOG_ERR("aws_iot_send (shadow update) failed, error: %d", err);
+        return;
+    }
+
+    (void)k_work_reschedule(&shadow_update_work, K_SECONDS(CONFIG_AWS_IOT_PUBLICATION_INTERVAL_SECONDS));
+
+    SHADOW_PUBLISHED = true;
 }
+
 
 /* ---------------- Connection handling ---------------- */
 

@@ -7,6 +7,9 @@
 extern uint32_t device_sleep_time_minutes;
 
 extern bool sensor_co2_enable;
+extern bool lsout_feature;
+extern uint32_t poweron_delay;
+
 
 typedef enum
 {

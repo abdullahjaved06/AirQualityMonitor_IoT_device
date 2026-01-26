@@ -15,6 +15,10 @@ int json_payload_construct(char *message, size_t size, struct payload *payload)
 
 		JSON_OBJ_DESCR_PRIM_NAMED(struct payload, "sensor_enable",
 			state.reported.sensor_enable, JSON_TOK_TRUE),
+		JSON_OBJ_DESCR_PRIM_NAMED(struct payload, "lsout_feature",
+			state.reported.lsout_enable, JSON_TOK_TRUE),
+		JSON_OBJ_DESCR_PRIM_NAMED(struct payload, "poweron_delay",
+			state.reported.power_on_delay, JSON_TOK_NUMBER),
 	};
 
 	const struct json_obj_descr state_descr[] = {
