@@ -31,7 +31,7 @@ float temp = 0.0f;
 float hum = 0.0f;
 float co2 = 0.0f;
 float voltage=0.0f;
-char power_source[]="";
+char power_source[16] = "BATTERY";  
 
 bool high_priority_alert = false;
 bool low_priority_alert = false;
@@ -82,11 +82,13 @@ int main(void)
 	LOG_INF("The AWS IoT MQTT started, version: %s\n\r", CONFIG_AWS_IOT_APP_VERSION);
 	// write_device_certs_to_modem();
 	peripherals_init();
-	enable_regulator();  // enable npm1300 to get sensors.
+	enable_regulator();
+	// disable_regulator();  // disable npm1300 initially. tried, but not working, need to debug.
 	
 	int err;
 
-	const char *topic = MY_CUSTOM_TOPIC_PUB;
+	// const char *topic = MY_CUSTOM_TOPIC_PUB;
+	const char *topic = NULL;
 	DEVICE_STATE = DEVICE_STATE_INIT;
 
 	register_lte_lc_event_handler();
@@ -112,6 +114,13 @@ int main(void)
 				FATAL_ERROR();
 				return err;
 			}
+			topic = aws_iot_get_telemetry_pub_topic();
+			if (!topic || topic[0] == '\0') {
+				LOG_ERR("Telemetry topic not ready");
+				FATAL_ERROR();
+			}
+			LOG_INF("Telemetry publish topic: %s", topic);
+
 			DEVICE_STATE = DEVICE_STATE_LTE_CONNECT;
 			break;
 
@@ -124,13 +133,18 @@ int main(void)
 			break;
 
 		case DEVICE_BATTERY_FUEL_GUAGE:
-			 voltage = read_battery_voltage();
+			//first enable LSD2 switch.
+			// enable_regulator();
+			k_msleep(3000);
+			voltage = read_battery_voltage();
     		LOG_INF("Battery voltage (fresh): %.3f V\n", (double)voltage);
 			DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
     		break;
 
 
 		case DEVICE_STATE_TEMP_HUM:
+		// enable_regulator();
+			k_msleep(3000);
 			temp = sht4x_read_temperature();
 			// Check temperature
 			if (temp > temp_high_threshold || temp < temp_low_threshold)
@@ -163,6 +177,8 @@ int main(void)
 			} else if (co2 > co2_medium_threshold) {
 				low_priority_alert = true;
 			}
+			//now disable LSD2 switch.
+			// disable_regulator();
 			DEVICE_STATE = DEVICE_STATE_POWER_SOURCE;
 			break;
 		case DEVICE_STATE_POWER_SOURCE:

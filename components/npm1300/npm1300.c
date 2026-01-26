@@ -5,7 +5,7 @@
 
 LOG_MODULE_REGISTER(NPM1300);
 
-const char *topic = MY_CUSTOM_TOPIC_PUB;
+ const char *topic=NULL; //TODO: FIX
 
 #define FAST_FLASH_MS 100
 #define SLOW_FLASH_MS 500
@@ -160,6 +160,10 @@ void enable_regulator()
 	LOG_INF("PMIC device ok\n");
 	regulator_enable(ldsw2);
 	fuel_gauge_update(charger, vbus_connected);
+}
+
+void disable_regulator() {
+	regulator_disable(ldsw2);
 }
 
 /* nPM1300 CHARGER.BCHGCHARGESTATUS register bitmasks */
