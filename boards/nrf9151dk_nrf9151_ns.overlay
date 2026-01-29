@@ -1,23 +1,55 @@
 
 #include <dt-bindings/regulator/npm1300.h>
 #include <zephyr/dt-bindings/input/input-event-codes.h>
-// / {
-//     chosen {
-//         zephyr,console = &uart0;
-//         zephyr,shell-uart = &uart0;
-//         zephyr,uart-mcumgr = &uart0;
-//     };
-// };
 
-// /* Clean I2C1 definition – NO sensors for now */
-// &i2c2 {
-//     status = "okay";
-//     /* Don't override compatible unless really needed; SoC dtsi already has it */
-//     pinctrl-0 = <&i2c0_default>;
-//     pinctrl-1 = <&i2c0_sleep>;
-//     pinctrl-names = "default", "sleep";
-//     clock-frequency = <I2C_BITRATE_STANDARD>; /* start at 100kHz */
-// };
+/ {
+    chosen {
+        zephyr,display = &ssd16xx_waveshare_epaper_gdey0213b74;
+		 zephyr,console = &uart0;
+        zephyr,shell-uart = &uart0;
+        zephyr,uart-mcumgr = &uart0;
+    };
+    mipi_dbi_waveshare_epaper_gdey0213b74 {
+		compatible = "zephyr,mipi-dbi-spi";
+		spi-dev = <&spi1>;
+		dc-gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;	/* DC Pin*/
+		reset-gpios = <&gpio0 17 GPIO_ACTIVE_LOW>;	/* Reset Pin */
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ssd16xx_waveshare_epaper_gdey0213b74: ssd16xxfb@0 {
+			compatible = "gooddisplay,gdey0213b74", "solomon,ssd1680";  // waveshare_epaper_gdey0213b74, for FC-A002.
+            // compatible = "gooddisplay,gdeh0213b72" , "solomon,ssd1675a"; //SSD1675A / ssd16xx waveshare_epaper_gdeh0213b72
+			// compatible = "gooddisplay,gdeh0213b1","solomon,ssd1673";   // waveshare_epaper_gdeh0213b1
+			
+
+			mipi-max-frequency = <4000000>;
+			reg = <0>;
+			width = <250>;
+			height = <122>;
+			busy-gpios = <&gpio0 18 GPIO_ACTIVE_HIGH>;	/* BUSY Pin */
+            rotation=<0>;
+			tssv = <0x80>;
+
+			full {
+				border-waveform = <0x05>;
+			};
+
+			partial {
+				border-waveform = <0x3c>;
+			};
+		};
+	};
+};
+&spi1 {
+	status = "okay";
+	cs-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;	/* CS Pin */
+    pinctrl-0 = <&spi1_default>;
+	pinctrl-1 = <&spi1_sleep>;
+	pinctrl-names = "default", "sleep";
+    
+};
+
 
 &i2c2 {
     compatible = "nordic,nrf-twim";
@@ -104,19 +136,6 @@ nordic,led2-mode = "host";
    };
 };
 
-&spi2 {
-	status = "okay";
-	cs-gpios = <&gpio0 20 GPIO_ACTIVE_LOW>;
-	pinctrl-0 = <&spi2_default>;
-	pinctrl-1 = <&spi2_sleep>;
-	pinctrl-names = "default", "sleep";
-	spi_epd: spi_epd@0 {
-		compatible = "vnd,spi-device";
-			reg = <0>;
-			spi-max-frequency = <8000000>;
-			label = "spi_epd";
-	};
-};
 
 &pinctrl {
     i2c0_default: i2c0_default {
@@ -133,68 +152,46 @@ nordic,led2-mode = "host";
             low-power-enable;
         };
     };
-    spi2_default: spi2_default {
+
+    spi1_default: spi1_default {
 		group1 {
-			psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,
-					<NRF_PSEL(SPIM_MOSI, 0, 23)>,
-                    <NRF_PSEL(SPIM_MISO, 0,24)>;
+			psels = <NRF_PSEL(SPIM_SCK,  0, 14)>,
+					<NRF_PSEL(SPIM_MOSI, 0, 13)>;
+                    // <NRF_PSEL(SPIM_MISO, 0, 24)>;//not required.
 					
 		};
 	};
-	spi2_sleep: spi2_sleep {
+	spi1_sleep: spi1_sleep {
 		group1 {
-			psels = <NRF_PSEL(SPIM_SCK, 0, 22)>,
-					<NRF_PSEL(SPIM_MOSI, 0, 23)>,
-                    <NRF_PSEL(SPIM_MISO, 0,24)>;
-
+			psels = <NRF_PSEL(SPIM_SCK, 0,  14)>,
+					<NRF_PSEL(SPIM_MOSI, 0, 13)>;
+                    // <NRF_PSEL(SPIM_MISO, 0, 24)>;//not required.
 					
 			low-power-enable;
 		};
 	};
 
-    // uart0_default: uart0_default {
-    //     group1 {
-    //         psels = <NRF_PSEL(UART_TX, 0, 29)>;
-    //                 // <NRF_PSEL(UART_RTS, 0, 28)>; 
-    //     };
-    //     group2 {
-    //         psels = <NRF_PSEL(UART_RX, 0, 30)>;
-    //                 // <NRF_PSEL(UART_CTS, 0, 26)>; 
-    //         bias-pull-up;
-    //     };
-    // };
+    uart0_default: uart0_default {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 0, 29)>,
+				<NRF_PSEL(UART_RTS, 0, 14)>;
+		};
+		group2 {
+			psels = <NRF_PSEL(UART_RX, 0, 30)>,
+				<NRF_PSEL(UART_CTS, 0, 15)>;
+			bias-pull-up;
+		};
+	};
 
-    // uart0_sleep: uart0_sleep {
-    //     group1 {
-    //         psels = <NRF_PSEL(UART_TX, 0, 29)>,  
-    //                 <NRF_PSEL(UART_RX, 0, 30)>;
-    //                 // <NRF_PSEL(UART_RTS, 0, 28)>, 
-    //                 // <NRF_PSEL(UART_CTS, 0, 26)>; 
-    //         low-power-enable;
-    //     };
-    // };
-
-    // uart0_default: uart0_default {
-	// 	group1 {
-	// 		psels = <NRF_PSEL(UART_TX, 0, 29)>,
-	// 			<NRF_PSEL(UART_RTS, 0, 14)>;
-	// 	};
-	// 	group2 {
-	// 		psels = <NRF_PSEL(UART_RX, 0, 30)>,
-	// 			<NRF_PSEL(UART_CTS, 0, 15)>;
-	// 		bias-pull-up;
-	// 	};
-	// };
-
-	// uart0_sleep: uart0_sleep {
-	// 	group1 {
-	// 		psels = <NRF_PSEL(UART_TX, 0, 29)>,
-	// 			<NRF_PSEL(UART_RX, 0, 30)>,
-	// 			<NRF_PSEL(UART_RTS, 0, 14)>,
-	// 			<NRF_PSEL(UART_CTS, 0, 15)>;
-	// 		low-power-enable;
-	// 	};
-	// };
+	uart0_sleep: uart0_sleep {
+		group1 {
+			psels = <NRF_PSEL(UART_TX, 0, 29)>,
+				<NRF_PSEL(UART_RX, 0, 30)>,
+				<NRF_PSEL(UART_RTS, 0, 14)>,
+				<NRF_PSEL(UART_CTS, 0, 15)>;
+			low-power-enable;
+		};
+	};
 
 };
 
@@ -218,66 +215,27 @@ nordic,led2-mode = "host";
 };
 
 
-
-// &uart1 {
-//     status = "disabled";
-// };
-
-// &uart0 {
-// 	status = "okay";
-//     hw-flow-control;
-// 	current-speed = <9600>;
-//     label = "UART0";
-// 	pinctrl-0 = <&uart0_default>;
-// 	pinctrl-1 = <&uart0_sleep>;
-// 	pinctrl-names = "default", "sleep";
-// };
+&uart0 {
+	status = "okay";
+    hw-flow-control;
+	current-speed = <9600>;
+    label = "UART0";
+	pinctrl-0 = <&uart0_default>;
+	pinctrl-1 = <&uart0_sleep>;
+	pinctrl-names = "default", "sleep";
+};
 
 
+&uart1 {
+    status = "disabled";
+};
+
+&spi3 {
+    status="disabled";
+};
 
 
+&button2 {
+    status="disabled";
+};
 
-
-// &spi3 {
-//     status = "disabled";
-// };
-
-// &i2c2 {
-//     status = "disabled";
-// };
-
-// &adc {
-//     status = "disabled";
-// };
-
-// &pwm0 {
-//     status = "disabled";
-// };
-
-// &button0 {
-//     status = "disabled";
-// };
-// &button1 {
-//     status = "disabled";
-// };
-// &button2 {
-//     status = "disabled";
-// };
-// &button3 {
-//     status = "disabled";
-// };
-// &led0 {
-//     status = "disabled";
-// };
-
-// &led1 {
-//     status = "disabled";
-// };
-
-// &led2 {
-//     status = "disabled";
-// };
-
-// &led3 {
-//     status = "disabled";
-// };
