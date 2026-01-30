@@ -11,6 +11,7 @@
 #include "aws_iot_mqtt.h"
 #include "json_payload.h"
 #include "common.h"
+#include <modem/modem_info.h>
 
 LOG_MODULE_REGISTER(AWS_IOT_MQTT);
 
@@ -543,4 +544,32 @@ int aws_iot_mqtt_disconnect(void)
 
 	LOG_WRN("AWS IoT MQTT Disconnected");
 	return 0;
+}
+
+bool lte_read_rsrp_dbm(int16_t *rsrp_dbm)
+{
+    if (!rsrp_dbm) return false;
+
+    int err = modem_info_init();
+    if (err) {
+        return false;
+    }
+
+    /* modem_info_get_rsrp() returns RSRP in dBm (negative value typically) */
+    int16_t rsrp;
+    err = modem_info_get_rsrp(&rsrp);
+    if (err) {
+        return false;
+    }
+
+    *rsrp_dbm = rsrp;
+    return true;
+}
+ const char *rsrp_quality_label(int16_t rsrp_dbm)
+{
+    if (rsrp_dbm >= -80)  return "EXCELLENT";
+    if (rsrp_dbm >= -90)  return "GOOD";
+    if (rsrp_dbm >= -100) return "FAIR";
+    if (rsrp_dbm >= -110) return "POOR";
+    return "BAD";
 }

@@ -37,5 +37,7 @@ int aws_iot_publish_topic(const char *topic,
 			  enum mqtt_qos qos);
 
 const char *aws_iot_get_telemetry_pub_topic(void);
+bool lte_read_rsrp_dbm(int16_t *rsrp_dbm);
+const char *rsrp_quality_label(int16_t rsrp_dbm);
 
 #endif

@@ -128,6 +128,21 @@ int main(void)
 			if (LTE_CONNECTED)
 			{
 				LOG_INF("DEVICE STATE : LTE CONNECT\n\r");
+				int16_t rsrp;
+
+			if (lte_read_rsrp_dbm(&rsrp)) {
+				const char *q = rsrp_quality_label(rsrp);
+				printk("RSRP=%d dBm (%s)\n", rsrp, q);
+
+				// EPD draw example:
+				// draw_text(0, 0, "LTE:");
+				// draw_text(0, 16, "RSRP: -95 dBm");
+				// draw_text(0, 32, "Quality: FAIR");
+			} else {
+				printk("RSRP read failed\n");
+			}
+
+
 				DEVICE_STATE = DEVICE_BATTERY_FUEL_GUAGE;
 			}
 			break;
