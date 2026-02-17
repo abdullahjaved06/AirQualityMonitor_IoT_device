@@ -1,11 +1,13 @@
 #include "npm1300.h"
 
 #include <zephyr/drivers/fuel_gauge.h>
-#include "aws_iot_mqtt.h"
+
 
 LOG_MODULE_REGISTER(NPM1300);
 
- const char *topic=NULL; //TODO: FIX
+//  const char *topic=NULL; //TODO: FIX
+ const struct device *charger = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_charger));
+
 
 #define FAST_FLASH_MS 100
 #define SLOW_FLASH_MS 500
@@ -15,9 +17,31 @@ LOG_MODULE_REGISTER(NPM1300);
 static volatile int flash_time_ms = SLOW_FLASH_MS;
 volatile bool vbus_connected;
 
-static void event_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
+//  Work queue for power events
+static struct k_work power_event_work;
+ power_event_t pending_power_event = POWER_EVENT_NONE;
+static power_event_callback_t power_callback = NULL;
+
+// Work handler (runs in thread context)
+static void power_event_work_handler(struct k_work *work)
+{
+    if (power_callback && pending_power_event != POWER_EVENT_NONE) {
+        power_callback(pending_power_event);
+        pending_power_event = POWER_EVENT_NONE;
+    }
+}
+
+// Register callback from main
+void npm1300_register_power_callback(power_event_callback_t callback)
+{
+    power_callback = callback;
+    k_work_init(&power_event_work, power_event_work_handler);
+}
+
+ void event_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
 	static int press_t;
+	LOG_INF("in event callback npm1300.");
 
 	if (pins & BIT(NPM1300_EVENT_SHIPHOLD_PRESS))
 	{
@@ -63,29 +87,24 @@ static void event_callback(const struct device *dev, struct gpio_callback *cb, u
 	if (pins & BIT(NPM1300_EVENT_VBUS_DETECTED))
 	{
 		LOG_INF("Vbus connected\n");
+		printk("Vbus connected\n");
+		printf("Vbus connected\n");
+
+
 		vbus_connected = true;
-		if (AWS_IOT_MQTT_CONNECTED)
-		{
-			aws_iot_publish_topic(topic, "{\"event\":\"USB_CONNECTED\"}", MQTT_QOS_0_AT_MOST_ONCE);
-		}
-		else
-		{
-			LOG_WRN("AWS Not Connected. Connect to AWS first.");
-		}
+		      // Schedule work to notify main
+        pending_power_event = POWER_EVENT_USB_CONNECTED;
+        k_work_submit(&power_event_work);
+	
 	}
 
 	if (pins & BIT(NPM1300_EVENT_VBUS_REMOVED))
 	{
-		LOG_INF("Vbus removed\n");
+		printk("Vbus removed\n");
 		vbus_connected = false;
-		if (AWS_IOT_MQTT_CONNECTED)
-		{
-			aws_iot_publish_topic(topic, "{\"event\":\"USB_REMOVED\"}", MQTT_QOS_0_AT_MOST_ONCE);
-		}
-		else
-		{
-			LOG_WRN("AWS Not Connected. Connect to AWS first.");
-		}
+		    // Schedule work to notify main
+        pending_power_event = POWER_EVENT_USB_DISCONNECTED;
+        k_work_submit(&power_event_work);
 	}
 }
 
@@ -355,4 +374,31 @@ int fuel_gauge_update(const struct device *charger, bool vbus_connected)
 	printk("SoC: %.2f, TTE: %.0f, TTF: %.0f\n", (double)soc, (double)tte, (double)ttf);
 
 	return 0;
+}
+
+//  function to get SoC percentage
+float get_battery_soc(void)
+{
+    float voltage, current, temp;
+    int32_t chg_status;
+    
+    if (read_sensors(charger, &voltage, &current, &temp, &chg_status) < 0) {
+        return -1.0f;
+    }
+    
+    float delta = (float)k_uptime_delta(&ref_time) / 1000.f;
+    float soc = nrf_fuel_gauge_process(voltage, current, temp, delta, NULL);
+    
+    return soc;  // Returns 0.0 to 100.0
+}
+
+float get_battery_voltage(void)
+{
+    float voltage, current, temp;
+    int32_t chg_status;
+    
+    if (read_sensors(charger, &voltage, &current, &temp, &chg_status) < 0) {
+        return -1.0f;
+    }
+    return voltage;
 }

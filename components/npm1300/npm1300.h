@@ -24,7 +24,7 @@
 
 #include <nrf_fuel_gauge.h>
 
-
+int fuel_gauge_init(const struct device *charger);
 
 
 static const struct device *pmic = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_pmic));
@@ -32,15 +32,27 @@ static const struct device *leds = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_leds));
 static const struct device *regulators = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_regulators));
 // static const struct device *ldsw1 = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_ldo1));
 static const struct device *ldsw2 = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_ldo2));
- const struct device *charger = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_charger));
 // const struct device *npm1300_gpio = DEVICE_DT_GET(DT_NODELABEL(npm1300_ek_gpio));
 
-static void event_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
+ void event_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
 bool configure_events(void);
 void enable_regulator();
-
+void disable_regulator();
+float get_battery_soc(void);
+float get_battery_voltage(void);
 int fuel_gauge_init(const struct device *charger);
 int fuel_gauge_update(const struct device *charger, bool vbus_connected);
 // float read_battery_voltage(void);
+
+//  Power event types
+typedef enum {
+    POWER_EVENT_NONE,
+    POWER_EVENT_USB_CONNECTED,
+    POWER_EVENT_USB_DISCONNECTED
+} power_event_t;
+
+//  Register callback for power events
+typedef void (*power_event_callback_t)(power_event_t event);
+void npm1300_register_power_callback(power_event_callback_t callback);
 
 #endif /* NPM1300_H */

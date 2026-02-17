@@ -12,14 +12,19 @@
 #include "../components/scd41/scd41.h"
 #include "../components/sht40/sht40.h"
 #include "../components/leds/led.h"
+#include "../components/npm1300/npm1300.h"
+#include "../components/epd/epd_display.h"
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/kernel.h>
 
-extern const struct device *charger;   // declare from your other file
+extern const struct device *charger;   
 extern volatile bool vbus_connected;
 void peripherals_init(void);
 float read_battery_voltage(void);
+void on_power_event(power_event_t event);
+ void event_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
 LOG_MODULE_REGISTER(MAIN);
+
 
 #define ONE_MINUTE_MS 60000
 #define TEN_MINUTES_MS 600000
@@ -35,7 +40,11 @@ char power_source[16] = "BATTERY";
 
 bool high_priority_alert = false;
 bool low_priority_alert = false;
-
+int epd_init(void);
+void epd_draw_ui(int co2_ppm, float temperature, float humidity,
+                 int battery_percent, bool charging);
+float get_battery_soc(void);
+float get_battery_voltage(void);
 
 bool device_sleep = false;
 
@@ -74,17 +83,25 @@ void publish_named_shadow_state(const char *thing_name, const char *shadow_name)
 
 int main(void)
 {
-	LOG_INF("Custom PCB Firmware.");
-	// LOG_INF("DK Firmware.");
-
+	LOG_INF("Firmware Version: Alpha_0.2.");
 
 	uint64_t device_sleep_time = k_uptime_get_32();
 	LOG_INF("The AWS IoT MQTT started, version: %s\n\r", CONFIG_AWS_IOT_APP_VERSION);
-	// write_device_certs_to_modem();
+	// write_device_certs_to_modem();    //writes certs in modem.
 	peripherals_init();
+	k_msleep(2000);
+ // Register power event callback BEFORE enable_regulator()
+    npm1300_register_power_callback(on_power_event);
 	enable_regulator();
-	// disable_regulator();  // disable npm1300 initially. tried, but not working, need to debug.
-	
+// /* Initialize display */
+// LOG_INF("Initializing display...");
+// int ret = epd_init();
+// if (ret != 0) {
+//     LOG_ERR("Display init failed: %d", ret);
+// } else {
+//     k_msleep(100);  /* Small delay before first draw */
+//     epd_draw_ui(1111, 22.5f, 33.0f, 44, true);
+// }
 	int err;
 
 	// const char *topic = MY_CUSTOM_TOPIC_PUB;
@@ -148,18 +165,31 @@ int main(void)
 			break;
 
 		case DEVICE_BATTERY_FUEL_GUAGE:
-			//first enable LSD2 switch.
-			// enable_regulator();
-			k_msleep(3000);
-			voltage = read_battery_voltage();
-    		LOG_INF("Battery voltage (fresh): %.3f V\n", (double)voltage);
+		k_msleep(800);
+			 // Only control power if lsout_feature is enabled.
+			if (lsout_feature) {
+				printk("Sensor Power save feature Enabled.\n\r");
+				k_msleep(800);
+				printk("Regulator Turned On.\n\r");
+				enable_regulator();
+				printk("Power On delay: %d \n\r",poweron_delay);
+				k_msleep(poweron_delay);  // Use shadow-controlled delay
+
+			} else { 
+				printk("Sensor Power save feature Not Enabled.\n\r");
+
+			}
+				float soc = get_battery_soc();
+				float voltage = get_battery_voltage();
+			
+				printk("Battery: %.1f%% (%.3fV)", (double)soc, (double)voltage);
+    
 			DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
     		break;
 
 
 		case DEVICE_STATE_TEMP_HUM:
-		// enable_regulator();
-			k_msleep(3000);
+		
 			temp = sht4x_read_temperature();
 			// Check temperature
 			if (temp > temp_high_threshold || temp < temp_low_threshold)
@@ -192,8 +222,11 @@ int main(void)
 			} else if (co2 > co2_medium_threshold) {
 				low_priority_alert = true;
 			}
-			//now disable LSD2 switch.
-			// disable_regulator();
+			 // Only control power if lsout_feature is enabled.
+			if (lsout_feature) {
+				disable_regulator();
+				printk("Regulator Turned OFF.");
+			}
 			DEVICE_STATE = DEVICE_STATE_POWER_SOURCE;
 			break;
 		case DEVICE_STATE_POWER_SOURCE:
@@ -219,9 +252,10 @@ int main(void)
 					"\"humidity\": %.2f,"
 					"\"co2\": %.2f,"
 					"\"voltage\": %.2f,"
+					"\"charge(soc)\": %.2f,"
 					"\"powersource\": \"%s\""
 					"}",
-					temp, hum, co2, voltage, power_source);
+					temp, hum, co2, voltage,soc, power_source);
 
 
 				err = aws_iot_publish_topic(topic, payload, MQTT_QOS_0_AT_MOST_ONCE);
@@ -281,7 +315,7 @@ int main(void)
 				device_sleep = false;
 				device_sleep_time = k_uptime_get_32();
 #if CONFIG_AWS_IOT_USE_EDRX
-				DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
+				DEVICE_STATE = DEVICE_BATTERY_FUEL_GUAGE;
 #elif CONFIG_AWS_IOT_USE_LTE_POWER_OFF
 				DEVICE_STATE = DEVICE_STATE_INIT;
 #endif
@@ -343,4 +377,53 @@ float read_battery_voltage(void)
 
     voltage = (float)val.val1 + ((float)val.val2 / 1000000.0f);
     return voltage;
+}
+
+// NEW: Power event handler
+void on_power_event(power_event_t event)
+{
+    // Only publish if connected to AWS
+    if (!AWS_IOT_MQTT_CONNECTED) {
+        LOG_WRN("AWS not connected, skipping power event publish");
+        return;
+    }
+
+    const char *topic = aws_iot_get_telemetry_pub_topic();
+    if (!topic) {
+        LOG_ERR("Topic not ready");
+        return;
+    }
+
+    char payload[128];
+    const char *event_str;
+    
+    switch (event) {
+        case POWER_EVENT_USB_CONNECTED:
+            event_str = "USB_CONNECTED";
+            LOG_INF("Publishing USB connected event");
+            break;
+        case POWER_EVENT_USB_DISCONNECTED:
+            event_str = "USB_DISCONNECTED";
+            LOG_INF("Publishing USB disconnected event");
+            break;
+        default:
+            return;
+    }
+
+    snprintf(payload, sizeof(payload),
+             "{"
+             "\"event\": \"%s\","
+             "\"timestamp\": %lld,"
+             "\"vbus_connected\": %s"
+             "}",
+             event_str,
+             k_uptime_get(),
+             vbus_connected ? "true" : "false");
+
+    int err = aws_iot_publish_topic(topic, payload, MQTT_QOS_1_AT_LEAST_ONCE);
+    if (err) {
+        LOG_ERR("Failed to publish power event: %d", err);
+    } else {
+        LOG_INF("Power event published: %s", event_str);
+    }
 }
