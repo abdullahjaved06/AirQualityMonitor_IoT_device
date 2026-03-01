@@ -173,23 +173,23 @@ nordic,led2-mode = "host";
 
     // uart0_default: uart0_default {
 	// 	group1 {
-	// 		psels = <NRF_PSEL(UART_TX, 0, 29)>,
-	// 			<NRF_PSEL(UART_RTS, 0, 14)>;
+	// 		psels = <NRF_PSEL(UART_TX, 0, 29)>;
+	// 			// <NRF_PSEL(UART_RTS, 0, 14)>;
 	// 	};
 	// 	group2 {
-	// 		psels = <NRF_PSEL(UART_RX, 0, 30)>,
-	// 			<NRF_PSEL(UART_CTS, 0, 15)>;
-	// 		bias-pull-up;
+	// 		psels = <NRF_PSEL(UART_RX, 0, 30)>;
+	// 			// <NRF_PSEL(UART_CTS, 0, 15)>;
+	// 		// bias-pull-up;
 	// 	};
 	// };
 
 	// uart0_sleep: uart0_sleep {
 	// 	group1 {
 	// 		psels = <NRF_PSEL(UART_TX, 0, 29)>,
-	// 			<NRF_PSEL(UART_RX, 0, 30)>,
-	// 			<NRF_PSEL(UART_RTS, 0, 14)>,
-	// 			<NRF_PSEL(UART_CTS, 0, 15)>;
-	// 		low-power-enable;
+	// 			<NRF_PSEL(UART_RX, 0, 30)>;
+	// 			// <NRF_PSEL(UART_RTS, 0, 14)>,
+	// 			// <NRF_PSEL(UART_CTS, 0, 15)>;
+	// 		// low-power-enable;
 	// 	};
 	// };
 
@@ -229,6 +229,10 @@ nordic,led2-mode = "host";
 &uart1 {
     status = "disabled";
 };
+
+// &uart0 {
+//     status = "disabled";
+// };
 
 &spi3 {
     status="disabled";

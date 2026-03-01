@@ -23,6 +23,8 @@ void peripherals_init(void);
 float read_battery_voltage(void);
 void on_power_event(power_event_t event);
  void event_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
+ void epd_draw_ui(int co2_ppm, float temperature, float humidity,
+                 int battery_percent, bool charging);
 LOG_MODULE_REGISTER(MAIN);
 
 
@@ -88,20 +90,23 @@ int main(void)
 	uint64_t device_sleep_time = k_uptime_get_32();
 	LOG_INF("The AWS IoT MQTT started, version: %s\n\r", CONFIG_AWS_IOT_APP_VERSION);
 	// write_device_certs_to_modem();    //writes certs in modem.
+	LOG_INF("Initializing display...");
+	int ret = epd_init();
+	if (ret != 0) {
+		LOG_ERR("Display init failed: %d", ret);
+	} 
+	else {
+		k_msleep(100);  /* Small delay before first draw */
+		epd_draw_ui(2222, 33.5f, 44.0f, 55, true);
+	}
 	peripherals_init();
 	k_msleep(2000);
  // Register power event callback BEFORE enable_regulator()
     npm1300_register_power_callback(on_power_event);
 	enable_regulator();
-// /* Initialize display */
-// LOG_INF("Initializing display...");
-// int ret = epd_init();
-// if (ret != 0) {
-//     LOG_ERR("Display init failed: %d", ret);
-// } else {
-//     k_msleep(100);  /* Small delay before first draw */
-//     epd_draw_ui(1111, 22.5f, 33.0f, 44, true);
-// }
+/* Initialize display */
+k_msleep(2000);
+
 	int err;
 
 	// const char *topic = MY_CUSTOM_TOPIC_PUB;
@@ -191,6 +196,8 @@ int main(void)
 		case DEVICE_STATE_TEMP_HUM:
 		
 			temp = sht4x_read_temperature();
+		    epd_draw_ui(9999, 69.5f, 50.0f, 54, true);
+
 			// Check temperature
 			if (temp > temp_high_threshold || temp < temp_low_threshold)
 			{

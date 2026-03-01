@@ -1,0 +1,12 @@
+
+&uart0 {
+status = "disabled";
+/delete-property/ hw-flow-control;
+};
+
+
+
+&uart1 {
+status = "disabled";
+/delete-property/ hw-flow-control;
+};
