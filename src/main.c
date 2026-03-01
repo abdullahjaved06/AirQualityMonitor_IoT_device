@@ -22,9 +22,9 @@ extern volatile bool vbus_connected;
 void peripherals_init(void);
 float read_battery_voltage(void);
 void on_power_event(power_event_t event);
- void event_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
- void epd_draw_ui(int co2_ppm, float temperature, float humidity,
-                 int battery_percent, bool charging);
+void event_callback(const struct device *dev, struct gpio_callback *cb, uint32_t pins);
+void epd_draw_ui(int co2_ppm, float temperature, float humidity,
+                 int battery_percent, bool charging, int signal_rsrp);
 LOG_MODULE_REGISTER(MAIN);
 
 
@@ -38,13 +38,13 @@ float temp = 0.0f;
 float hum = 0.0f;
 float co2 = 0.0f;
 float voltage=0.0f;
+float soc = 0.0f;                   
+int16_t rsrp_value = 0;  
 char power_source[16] = "BATTERY";  
 
 bool high_priority_alert = false;
 bool low_priority_alert = false;
 int epd_init(void);
-void epd_draw_ui(int co2_ppm, float temperature, float humidity,
-                 int battery_percent, bool charging);
 float get_battery_soc(void);
 float get_battery_voltage(void);
 
@@ -85,42 +85,36 @@ void publish_named_shadow_state(const char *thing_name, const char *shadow_name)
 
 int main(void)
 {
-	LOG_INF("Firmware Version: Alpha_0.2.");
-
+	LOG_INF("Firmware Version: Alpha_0.3.");
+	LOG_INF("OTA works................/n");
 	uint64_t device_sleep_time = k_uptime_get_32();
 	LOG_INF("The AWS IoT MQTT started, version: %s\n\r", CONFIG_AWS_IOT_APP_VERSION);
 	// write_device_certs_to_modem();    //writes certs in modem.
 	LOG_INF("Initializing display...");
-	int ret = epd_init();
-	if (ret != 0) {
-		LOG_ERR("Display init failed: %d", ret);
-	} 
-	else {
-		k_msleep(100);  /* Small delay before first draw */
-		epd_draw_ui(2222, 33.5f, 44.0f, 55, true);
-	}
+    int ret = epd_init();
+    if (ret != 0) {
+        LOG_ERR("Display init failed: %d", ret);
+    } 
+    else {
+        k_msleep(100);
+        /* Show startup screen */
+        epd_draw_ui(0, 0.0f, 0.0f, 0, false,0);
+    }
 	peripherals_init();
-	k_msleep(2000);
  // Register power event callback BEFORE enable_regulator()
     npm1300_register_power_callback(on_power_event);
 	enable_regulator();
-/* Initialize display */
-k_msleep(2000);
 
 	int err;
-
-	// const char *topic = MY_CUSTOM_TOPIC_PUB;
 	const char *topic = NULL;
 	DEVICE_STATE = DEVICE_STATE_INIT;
 
 	register_lte_lc_event_handler();
 	
-
 	while (1)
 	{
 		switch (DEVICE_STATE)
 		{
-
 		case DEVICE_STATE_INIT:
 			LOG_INF("DEVICE STATE : DEVICE INIT\n\r");
 			err = lte_net_mgmt_connect();
@@ -148,25 +142,10 @@ k_msleep(2000);
 
 		case DEVICE_STATE_LTE_CONNECT:
 			if (LTE_CONNECTED)
-			{
-				LOG_INF("DEVICE STATE : LTE CONNECT\n\r");
-				int16_t rsrp;
-
-			if (lte_read_rsrp_dbm(&rsrp)) {
-				const char *q = rsrp_quality_label(rsrp);
-				printk("RSRP=%d dBm (%s)\n", rsrp, q);
-
-				// EPD draw example:
-				// draw_text(0, 0, "LTE:");
-				// draw_text(0, 16, "RSRP: -95 dBm");
-				// draw_text(0, 32, "Quality: FAIR");
-			} else {
-				printk("RSRP read failed\n");
-			}
-
-
-				DEVICE_STATE = DEVICE_BATTERY_FUEL_GUAGE;
-			}
+            {
+                LOG_INF("DEVICE STATE : LTE CONNECT\n\r");
+                DEVICE_STATE = DEVICE_BATTERY_FUEL_GUAGE;
+            }
 			break;
 
 		case DEVICE_BATTERY_FUEL_GUAGE:
@@ -174,7 +153,6 @@ k_msleep(2000);
 			 // Only control power if lsout_feature is enabled.
 			if (lsout_feature) {
 				printk("Sensor Power save feature Enabled.\n\r");
-				k_msleep(800);
 				printk("Regulator Turned On.\n\r");
 				enable_regulator();
 				printk("Power On delay: %d \n\r",poweron_delay);
@@ -188,6 +166,15 @@ k_msleep(2000);
 				float voltage = get_battery_voltage();
 			
 				printk("Battery: %.1f%% (%.3fV)", (double)soc, (double)voltage);
+				  if (LTE_CONNECTED) {
+					int16_t rsrp;
+					if (lte_read_rsrp_dbm(&rsrp)) {
+						rsrp_value = rsrp;
+						printk("RSRP: %d dBm\n", rsrp_value);
+					} else {
+						printk("RSRP read failed, keeping old value: %d\n", rsrp_value);
+					}
+    }
     
 			DEVICE_STATE = DEVICE_STATE_TEMP_HUM;
     		break;
@@ -196,39 +183,21 @@ k_msleep(2000);
 		case DEVICE_STATE_TEMP_HUM:
 		
 			temp = sht4x_read_temperature();
-		    epd_draw_ui(9999, 69.5f, 50.0f, 54, true);
-
-			// Check temperature
-			if (temp > temp_high_threshold || temp < temp_low_threshold)
-			{
-				high_priority_alert = true;
-			}
 			hum = sht4x_read_humidity();
-			// Check humidity
-			if (hum > hum_high_threshold || hum < hum_low_threshold)
-			{
-				high_priority_alert = true;
-			}
-
-				// Set LED mode accordingly
-			if (high_priority_alert) {
-				start_led_alert(LED_MODE_ALERT_RED);
-			} else if (low_priority_alert) {
-				start_led_alert(LED_MODE_ALERT_ORANGE);
-			} else {
-				stop_led_alert(); // No alerts
-			}
 			DEVICE_STATE = DEVICE_STATE_CO2;
 			break;
 
 		case DEVICE_STATE_CO2:
 			co2 = scd41_read_co2();
-			// Check CO2
-			if (co2 > co2_high_threshold) {
-				high_priority_alert = true;
-			} else if (co2 > co2_medium_threshold) {
-				low_priority_alert = true;
-			}
+			  epd_draw_ui(
+                (int)co2,           /* CO2 in ppm */
+                temp,               /* Temperature */
+                hum,                /* Humidity */
+                (int)soc,           /* Battery % */
+                vbus_connected,     /* Charging status */
+                rsrp_value          /* Signal strength */
+            );
+			
 			 // Only control power if lsout_feature is enabled.
 			if (lsout_feature) {
 				disable_regulator();
@@ -249,38 +218,38 @@ k_msleep(2000);
 
 		case DEVICE_STATE_AWS_SEND_DATA:
 			if (!OTA_STARTED && AWS_IOT_MQTT_CONNECTED)
-			{
-				LOG_INF("DEVICE STATE : AWS SEND DATA\n\r");
+            {
+                LOG_INF("DEVICE STATE : AWS SEND DATA\n\r");
 
-				char payload[256];
-				snprintf(payload, sizeof(payload),
-					"{"
-					"\"temperature\": %.2f,"
-					"\"humidity\": %.2f,"
-					"\"co2\": %.2f,"
-					"\"voltage\": %.2f,"
-					"\"charge(soc)\": %.2f,"
-					"\"powersource\": \"%s\""
-					"}",
-					temp, hum, co2, voltage,soc, power_source);
+                char payload[300];
+                snprintf(payload, sizeof(payload),
+                    "{"
+                    "\"temperature\": %.2f,"
+                    "\"humidity\": %.2f,"
+                    "\"co2\": %.2f,"
+                    "\"voltage\": %.2f,"
+                    "\"charge(soc)\": %.2f,"
+                    "\"rsrp\": %d,"          
+                    "\"powersource\": \"%s\""
+                    "}",
+                    temp, hum, co2, voltage, soc, rsrp_value, power_source);
 
+                err = aws_iot_publish_topic(topic, payload, MQTT_QOS_0_AT_MOST_ONCE);
+                if (err)
+                {
+                    LOG_ERR("Failed to publish sensor data: %d", err);
+                }
 
-				err = aws_iot_publish_topic(topic, payload, MQTT_QOS_0_AT_MOST_ONCE);
-				if (err)
-				{
-					LOG_ERR("Failed to publish sensor data: %d", err);
-				}
+                k_msleep(6000);
+                AWS_IOT_WAIT_TIME = k_uptime_get_32();
 
-				k_msleep(6000);
-				AWS_IOT_WAIT_TIME = k_uptime_get_32();
-
-				if (OTA_STARTED)
-				{
-					DEVICE_STATE = DEVICE_STATE_OTA;
-					break;
-				}
-				DEVICE_STATE = DEVICE_STATE_SLEEP;
-			}
+                if (OTA_STARTED)
+                {
+                    DEVICE_STATE = DEVICE_STATE_OTA;
+                    break;
+                }
+                DEVICE_STATE = DEVICE_STATE_SLEEP;
+            }
 			break;
 
 		case DEVICE_STATE_OTA:
@@ -370,7 +339,7 @@ float read_battery_voltage(void)
         return -1.0f;
     }
 
-    /* Trigger fresh measurement */
+    /* Trigger measurement */
     if (sensor_sample_fetch(charger) < 0) {
         printk("Sensor fetch failed\n");
         return -1.0f;
@@ -386,7 +355,7 @@ float read_battery_voltage(void)
     return voltage;
 }
 
-// NEW: Power event handler
+// Power event handler
 void on_power_event(power_event_t event)
 {
     // Only publish if connected to AWS

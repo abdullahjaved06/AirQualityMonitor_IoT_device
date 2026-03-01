@@ -61,6 +61,20 @@ static void fill_rect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool black
             set_pixel(px, py, black);
 }
 
+static void draw_rect_outline(uint16_t x, uint16_t y, uint16_t w, uint16_t h, bool black)
+{
+    /* Top and bottom */
+    for (uint16_t i = 0; i < w; i++) {
+        set_pixel(x + i, y, black);
+        set_pixel(x + i, y + h - 1, black);
+    }
+    /* Left and right */
+    for (uint16_t i = 0; i < h; i++) {
+        set_pixel(x, y + i, black);
+        set_pixel(x + w - 1, y + i, black);
+    }
+}
+
 static void draw_hline(uint16_t x, uint16_t y, uint16_t len, bool black)
 {
     for (uint16_t i = 0; i < len; i++) set_pixel(x + i, y, black);
@@ -146,6 +160,105 @@ static int draw_small_string(uint16_t x, uint16_t y, const char *str)
     return x - start_x;
 }
 
+/* ============================================
+ * BATTERY ICON - Based on actual percentage
+ * ============================================ */
+static void draw_battery_icon(uint16_t x, uint16_t y, int percent)
+{
+    /* Clamp percentage */
+    if (percent < 0) percent = 0;
+    if (percent > 100) percent = 100;
+    
+    /* Battery body outline: 20x12 pixels */
+    draw_rect_outline(x, y, 20, 12, true);
+    
+    /* Battery terminal (positive end) */
+    fill_rect(x + 20, y + 3, 3, 6, true);
+    
+    /* Fill level based on percentage */
+    /* Inner area is 16x8 (with 2px padding inside) */
+    int max_fill = 16;
+    int fill_width = (max_fill * percent) / 100;
+    
+    if (fill_width > 0) {
+        fill_rect(x + 2, y + 2, fill_width, 8, true);
+    }
+    
+    LOG_DBG("Battery: %d%%, fill=%d px", percent, fill_width);
+}
+
+/* ============================================
+ * SIGNAL BARS - Based on RSRP (dBm)
+ * ============================================
+ * RSRP ranges (typical LTE):
+ *   Excellent: > -80 dBm  → 4 bars
+ *   Good:      -80 to -90 → 3 bars
+ *   Fair:      -90 to -100 → 2 bars
+ *   Poor:      -100 to -110 → 1 bar
+ *   No signal: < -110      → 0 bars
+ * ============================================ */
+static int rsrp_to_bars(int rsrp_dbm)
+{
+    if (rsrp_dbm == 0) return 0;        /* No reading */
+    if (rsrp_dbm > -80) return 4;       /* Excellent */
+    if (rsrp_dbm > -90) return 3;       /* Good */
+    if (rsrp_dbm > -100) return 2;      /* Fair */
+    if (rsrp_dbm > -110) return 1;      /* Poor */
+    return 0;                            /* No signal */
+}
+
+static void draw_signal_bars(uint16_t x, uint16_t y, int rsrp_dbm)
+{
+    int num_bars = rsrp_to_bars(rsrp_dbm);
+    
+    /* Bar dimensions */
+    int bar_width = 3;
+    int bar_spacing = 2;
+    int bar_heights[] = {3, 5, 7, 10};  /* Heights for bars 1-4 */
+    int max_height = 10;
+    
+    for (int i = 0; i < 4; i++) {
+        int bar_x = x + i * (bar_width + bar_spacing);
+        int bar_h = bar_heights[i];
+        int bar_y = y + (max_height - bar_h);  /* Align to bottom */
+        
+        if (i < num_bars) {
+            /* Filled bar (active) */
+            fill_rect(bar_x, bar_y, bar_width, bar_h, true);
+        } else {
+            /* Empty bar (outline only) */
+            draw_rect_outline(bar_x, bar_y, bar_width, bar_h, true);
+        }
+    }
+    
+    LOG_DBG("Signal: %d dBm → %d bars", rsrp_dbm, num_bars);
+}
+
+/* ============================================
+ * CHARGING ICON 
+ * ============================================ */
+static void draw_charging_icon(uint16_t x, uint16_t y)
+{
+    /* Simple plug icon */
+    /*
+     *   █ █
+     *   █ █
+     *   ███
+     *   ███
+     *    █
+     */
+    
+    /* Two prongs at top */
+    fill_rect(x + 1, y + 0, 2, 3, true);   /* Left prong */
+    fill_rect(x + 5, y + 0, 2, 3, true);   /* Right prong */
+    
+    /* Plug body */
+    fill_rect(x + 0, y + 3, 8, 4, true);
+    
+    /* Cable */
+    fill_rect(x + 3, y + 7, 2, 3, true);
+}
+
 /* Display API */
 static void refresh_display(void)
 {
@@ -154,9 +267,9 @@ static void refresh_display(void)
     };
     display_write(display_dev, 0, 0, &desc, framebuffer);
 }
+
 #define FB_STATIC_SIZE 4096
 static uint8_t framebuffer_static[FB_STATIC_SIZE];
-
 
 int epd_init(void)
 {
@@ -178,15 +291,12 @@ int epd_init(void)
     
     LOG_INF("EPD: %dx%d, fb_size=%d", phys_width, phys_height, fb_size);
     
-    /* Verify static buffer is large enough */
     if (fb_size > FB_STATIC_SIZE) {
         LOG_ERR("EPD: Static buffer too small! Need %d, have %d", fb_size, FB_STATIC_SIZE);
         return -ENOMEM;
     }
     
-    /* Use static buffer - no k_malloc needed */
     framebuffer = framebuffer_static;
-    
     clear_screen();
     display_blanking_off(display_dev);
     
@@ -199,14 +309,17 @@ int epd_init(void)
 void epd_clear(void) { if (initialized) clear_screen(); }
 void epd_refresh(void) { if (initialized) refresh_display(); }
 
+/* ============================================
+ * MAIN UI DRAWING FUNCTION
+ * ============================================ */
 void epd_draw_ui(int co2_ppm, float temperature, float humidity,
-                 int battery_percent, bool charging)
+                 int battery_percent, bool charging, int signal_rsrp)
 {
     if (!initialized) return;
-      LOG_INF("EPD: draw_ui called - CO2=%d, T=%.1f, H=%.1f, Batt=%d",
-            co2_ppm, (double)temperature, (double)humidity, battery_percent);
-    LOG_INF("EPD: framebuffer=%p, fb_size=%d, virt=%dx%d",
-            framebuffer, fb_size, virt_width, virt_height);
+    
+    LOG_INF("EPD: draw_ui - CO2=%d, T=%.1f, H=%.1f, Batt=%d%%, RSRP=%d",
+            co2_ppm, (double)temperature, (double)humidity, 
+            battery_percent, signal_rsrp);
     
     char buf[16];
     int content_width = virt_width - (2 * MARGIN);
@@ -217,26 +330,26 @@ void epd_draw_ui(int co2_ppm, float temperature, float humidity,
     int label_y = 5;
     int number_y = 28;
     
-    /* Header */
-    int batt_x = MARGIN, batt_y = 5;
-    for (int i = 0; i <= 18; i++) { set_pixel(batt_x + i, batt_y, true); set_pixel(batt_x + i, batt_y + 10, true); }
-    for (int i = 0; i <= 10; i++) { set_pixel(batt_x, batt_y + i, true); set_pixel(batt_x + 18, batt_y + i, true); }
-    fill_rect(batt_x + 19, batt_y + 3, 3, 5, true);
-    int fill = (15 * battery_percent) / 100;
-    if (fill > 0) fill_rect(batt_x + 2, batt_y + 2, fill, 7, true);
-    int sig_x = batt_x + 28;
-    int bar_h[] = {3, 5, 7, 10};
-    for (int i = 0; i < 4; i++) fill_rect(sig_x + i * 5, batt_y + (10 - bar_h[i]), 3, bar_h[i], true);
+    /* ========== HEADER ========== */
+    int icon_y = 4;
+    
+    /* Battery icon (left side) */
+    draw_battery_icon(MARGIN, icon_y, battery_percent);
+    
+    /* Signal bars (after battery, with gap) */
+    int sig_x = MARGIN + 28;
+    draw_signal_bars(sig_x, icon_y, signal_rsrp);
+    
+    /* Charging icon (right side) */
     if (charging) {
         int chg_x = virt_width - MARGIN - 14;
-        fill_rect(chg_x + 4, batt_y, 4, 3, true);
-        fill_rect(chg_x + 2, batt_y + 3, 6, 2, true);
-        fill_rect(chg_x + 4, batt_y + 5, 4, 3, true);
-        fill_rect(chg_x + 5, batt_y + 8, 2, 3, true);
+        draw_charging_icon(chg_x, icon_y);
     }
+    
+    /* Header separator line */
     draw_hline(MARGIN, header_h, content_width, true);
     
-    /* CO2 */
+    /* ========== CO2 SECTION ========== */
     int sec_y = header_h;
     draw_small_string(MARGIN, sec_y + label_y, "CO2 (ppm)");
     snprintf(buf, sizeof(buf), "%d", co2_ppm);
@@ -244,7 +357,7 @@ void epd_draw_ui(int co2_ppm, float temperature, float humidity,
     draw_large_string((virt_width - w) / 2, sec_y + number_y, buf);
     draw_hline(MARGIN, header_h + section_h, content_width, true);
     
-    /* Humidity */
+    /* ========== HUMIDITY SECTION ========== */
     sec_y = header_h + section_h;
     draw_small_string(MARGIN, sec_y + label_y, "HUM (%)");
     snprintf(buf, sizeof(buf), "%d", (int)humidity);
@@ -252,7 +365,7 @@ void epd_draw_ui(int co2_ppm, float temperature, float humidity,
     draw_large_string((virt_width - w) / 2, sec_y + number_y, buf);
     draw_hline(MARGIN, header_h + section_h * 2, content_width, true);
     
-    /* Temperature */
+    /* ========== TEMPERATURE SECTION ========== */
     sec_y = header_h + section_h * 2;
     draw_small_string(MARGIN, sec_y + label_y, "TEMP (C)");
     int t_int = (int)temperature;
@@ -262,8 +375,8 @@ void epd_draw_ui(int co2_ppm, float temperature, float humidity,
     w = get_large_string_width(buf);
     draw_large_string((virt_width - w) / 2, sec_y + number_y, buf);
     
-  
-      LOG_INF("EPD: Refreshing display...");
+    /* Refresh display */
+    LOG_INF("EPD: Refreshing display...");
     refresh_display();
     LOG_INF("EPD: Done");
 }
